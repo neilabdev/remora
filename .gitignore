@@ -1,0 +1,46 @@
+iphone/build
+.DS_Store
+.svn
+.idea
+.idea/
+.idea/*
+# Mac OS X
+*.DS_Store
+# Xcode
+build/*
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xcworkspace
+!default.xcworkspace
+xcuserdata
+profile
+*.moved-aside
+# Xcode
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+nbproject/
+*.log
+/webapp/.ivy2/
+/webapp/.idea/
+*.iml
+*.pyc
+buildPlugins
+target
+.gradle
+gradle
+.project
+.classpath
+build
+out
+plugins/*
