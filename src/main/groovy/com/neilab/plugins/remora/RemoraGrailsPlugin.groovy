@@ -48,21 +48,16 @@ Brief summary/description of the plugin.
         // TODO Implement additions to web.xml (optional), this event occurs before
     }
 
-
-
     void doWithDynamicMethods() {
         // TODO Implement registering dynamic methods to classes (optional)
         ConstrainedProperty.registerNewConstraint('contentType', ContentTypeConstraint)
         ConstrainedProperty.registerNewConstraint('fileSize', FileSizeConstraint)
         for (GrailsDomainClass domainClass in grailsApplication.domainClasses) {
-         //   registerDatabaseProvider(domainClass)
             registerRemoraDomain(domainClass)
         }
     }
 
     protected registerRemoraDomain(GrailsDomainClass domainClass) {
-        //    def attachable = GrailsClassUtils.isStaticProperty(domainClass.clazz, "attachments") ? domainClass.clazz.attachments : null
-        //   def enableRemora = GrailsClassUtils.isStaticProperty(domainClass.clazz, "remora") ? domainClass.clazz.remora : null
         def hasAttachments = domainClass.properties.findAll { it.type == Attachment } ?: null
         if (!hasAttachments)
             return
@@ -76,8 +71,6 @@ Brief summary/description of the plugin.
 
 
     void doWithApplicationContext() {
-        // TODO Implement post initialization spring config (optional)
-        // TODO Implement post initialization spring config (optional)
         grailsApplication.mainContext.eventTriggeringInterceptor.datastores.each { k, datastore ->
             applicationContext.addApplicationListener new AttachmentEventListener(datastore)
         }

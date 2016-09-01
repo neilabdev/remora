@@ -93,7 +93,6 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         applyPropertyOptions(event, attachmentFields)
         for (attachmentProperty in attachmentFields) {
             def attachment = event.entityObject."${attachmentProperty.name}" as Attachment
-          //  def attachmentOptions = event.entityObject."${OPTIONS_KEY}"?."${attachmentProperty.name}"
             attachment?.verify()
         }
     }
@@ -103,12 +102,13 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         for (attachmentProperty in attachmentFields) {
             def attachment = event.entityObject."${attachmentProperty.name}"
             if (event.entityObject.isDirty(attachmentProperty.name)) {
-                def attachmentOptions = event.entityObject."${OPTIONS_KEY}"?."${attachmentProperty.name}"
+                def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
+                def attachmentOptions = entityOptions?."${attachmentProperty.name}"
                 def originalAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
                 if (originalAttachment) {
                     originalAttachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
                     originalAttachment.propertyName = attachmentProperty.name
-                    originalAttachment.options = attachmentOptions
+                    originalAttachment.options = attachmentOptions ?: [:]
                     originalAttachment.parentEntity = event.entityObject
                     originalAttachment.delete()
                 }
@@ -123,12 +123,13 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
 
     static protected applyPropertyOptions(event, attachmentFields) {
         for (attachmentProperty in attachmentFields) {
-            def attachmentOptions = event.entityObject."${OPTIONS_KEY}"?."${attachmentProperty.name}"
+            def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
+            def attachmentOptions = entityOptions?."${attachmentProperty.name}"
             def attachment = event.entityObject."${attachmentProperty.name}"
             if (attachment) {
                 attachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
                 attachment.propertyName = attachmentProperty.name
-                attachment.options = attachmentOptions
+                attachment.options = attachmentOptions ?: [:]
                 attachment.parentEntity = event.entityObject
             }
         }
