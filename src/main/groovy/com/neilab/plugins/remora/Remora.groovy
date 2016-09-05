@@ -58,12 +58,6 @@ class Remora {
         registeredDomains[clazz] =  true
     }
 
-    public static void registerClass(Class clazz) {
-        def attachable = GrailsClassUtils.isStaticProperty(clazz, "attachments") ? clazz.attachments : null
-        def enableRemora = GrailsClassUtils.isStaticProperty(clazz, "remora") ? clazz.remora : null
-        registeredDomains[clazz] = enableRemora ?: attachable ?: true
-    }
-
     public static boolean registeredClass(Class clazz) {
         registeredDomains.containsKey(clazz)
     }
