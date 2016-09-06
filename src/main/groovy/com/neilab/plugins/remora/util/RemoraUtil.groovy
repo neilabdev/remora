@@ -75,7 +75,7 @@ class RemoraUtil {
                 replace(":id", "${parentIdentity}").
                 replace(":type", "${style}").
                 replace(":style", "${style}").
-                replace(":propertyName", "${propertyName}") // :domainName/:propertyName/:id/:type
+                replace(":propertyName", "${propertyName}") // :class/:domainName/:style/:propertyName/:id/:type
     }
 
     public static String joinPath(String prefix, String suffix) {
