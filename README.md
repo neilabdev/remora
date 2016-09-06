@@ -103,7 +103,7 @@ import com.neilab.plugins.remora.AttachmentUserType
 class Book {
   String name
   Integer size
-  Attachment photo
+  Attachment photo      // only this is require, everything else is optional
 
   static remora = [
     photo: [    // if a key is the name of a property and  not reserved (see below), can be used to configure attachments properties
