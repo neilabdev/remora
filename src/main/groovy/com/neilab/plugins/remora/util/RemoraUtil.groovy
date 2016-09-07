@@ -1,6 +1,7 @@
 package com.neilab.plugins.remora.util
 
 import com.neilab.plugins.remora.Attachment
+import grails.util.GrailsClassUtils
 import grails.util.GrailsNameUtils
 import grails.util.Holders
 
@@ -92,13 +93,14 @@ class RemoraUtil {
     }
 
     public static Map storageOptions(Class clazz, String domainName, String propertyName,Map attachmentOptions) {
-     //  def options = [:] << params
         def options = attachmentOptions
         def config = getConfig()
         def storage_options = config?.domain?."${domainName}"?."${propertyName}"?.storage ?: // grails.plugin.remora.domain.<domain>.<property>.storage ?:
                 config?.domain?."${domainName}"?.storage ?: // grails.plugin.remora.domain.<domain>.storage ?:
                         config?.storage ?: [:] // grails.plugin.remora.storage
-        storage_options = storage_options + (clazz?."remora"?.storage ?: [:]) // Model.remora.storage
+        if( GrailsClassUtils.isStaticProperty(clazz, "remora") && clazz?."remora" instanceof Map) {
+            storage_options = storage_options + (clazz?."remora"?.storage ?: [:]) // Model.remora.storage
+        }
         storage_options = storage_options + (options?."${propertyName}"?.storage ?: options?.storage ?: [:]) //Model.remora.properyName.storage
         storage_options = storage_options.clone()
 

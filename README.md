@@ -30,6 +30,14 @@ In order to upload files, we must first designate a storage provider for these f
 or this can be defined in your `application.groovy` or 'application.yml'.
 
 ```groovy
+
+import com.neilab.plugins.remora.Attachment
+import com.neilab.plugins.remora.AttachmentUserType
+
+grails.gorm.default.mapping = {
+    "user-type" type: AttachmentUserType, class: Attachment // useful to only require specifying class type in domain
+}
+
 remora {
     storage {
         bucket = 'uploads'
@@ -39,7 +47,7 @@ remora {
             baseUrl = 'http://localhost:8080/image-test/storage'
         }
 
-        provider {
+        provider { // corresponds to provider in providerOptions
             local {
                 basePath = 'storage'
                 baseUrl = 'http://localhost:8080/image-test/storage'
