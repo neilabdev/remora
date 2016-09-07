@@ -1,7 +1,8 @@
 Remora
 ======
 
-Remora is a Grails Image / File Upload / Attachment Plugin. It was initially based on the Selfie plugin, which at the time was limited to grails 2 and implemented in a manner that would embed columns into the domain model, which was not desired, and thus the fork was created to resolve these issues with additional features. 
+Remora is a Grails Image / File Upload / Attachment Plugin. It was initially based on the excellent Selfie plugin by bertramlabs, which at the time was limited to grails 2 and implemented using grails column embedding feature to incorporate attachments into the domain model, which was not ideal for my specific project and thus a fork was created to resolve these issues with additional features. 
+
 You may use Remora to attach files to your domain models, upload to a CDN, validate content, and produce thumbnails.
 
 * Domain Attachment
