@@ -42,7 +42,7 @@ Remora is a Grails Image / File Upload Plugin initially based on the Selfie plug
     // def issueManagement = [ system: "JIRA", url: "http://jira.grails.org/browse/GPMYPLUGIN" ]
 
     // Online location of the plugin's browseable source code.
-    def scm = [ url: "https://github.com/valerius/remora" ]
+    def scm = [ url: "https://github.com/neilabdev/remora" ]
 
     def doWithWebDescriptor = { xml ->
         // TODO Implement additions to web.xml (optional), this event occurs before

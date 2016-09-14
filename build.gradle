@@ -67,8 +67,8 @@ dependencies {
 grailsPublish {
    // githubSlug = 'foo/bar'
   //  userOrg = 'NEiLAB, LLC'
-    vcsUrl = "https://github.com/valerius/remora"
-    issueTrackerUrl = "https://github.com/valerius/remora/issues"
+    vcsUrl = "https://github.com/neilabdev/remora"
+    issueTrackerUrl = "https://github.com/neilabdev/remora/issues"
 
     license {
         name = 'Apache-2.0'
