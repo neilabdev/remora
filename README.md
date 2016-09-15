@@ -18,7 +18,7 @@ Add The Following to your `build.gradle`:
 
 ```groovy
 dependencies {
-    compile ':remora:1.0.0'
+    compile ':remora:1.0.1'
 }
 ```
 
