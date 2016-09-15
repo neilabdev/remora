@@ -74,9 +74,9 @@ grailsPublish {
         name = 'Apache-2.0'
     }
     title = "$project.name"
-    desc = "Remora is a Grails Image / File Upload Plugin formally based on Selfie plugin. Use Remora to attach files to your domain models, upload to a CDN, validate content, produce thumbnails."
+    desc = "Remora is a Grails Image / File Upload Plugin formally based on the excellent Selfie plugin. Use Remora to attach files to your domain models, upload to a CDN, validate content, produce thumbnails."
     developers = [jwhitfield: "James Whitfield"]
-    websiteUrl = "http://neilab.com"
+    websiteUrl = "https://github.com/neilabdev/remora"
 }
 
 assets {
