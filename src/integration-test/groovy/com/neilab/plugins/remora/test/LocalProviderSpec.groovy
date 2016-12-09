@@ -1,4 +1,4 @@
-package com.neilab.plugins.remora
+package com.neilab.plugins.remora.test
 import com.bertramlabs.plugins.karman.*
 import com.bertramlabs.plugins.karman.local.*
 import grails.test.mixin.integration.Integration

@@ -14,8 +14,8 @@ buildscript {
     }
 }
 
-version "1.0.1"
-group "com.neilab.plugins.remora"
+version "1.0.3"
+group "com.neilab.plugins"
 
 apply plugin: "eclipse"
 apply plugin: "idea"

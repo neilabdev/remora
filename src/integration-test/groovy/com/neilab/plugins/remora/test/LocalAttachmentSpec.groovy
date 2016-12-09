@@ -1,4 +1,7 @@
-package com.neilab.plugins.remora
+package com.neilab.plugins.remora.test
+
+import com.neilab.plugins.remora.Attachment
+import com.neilab.plugins.remora.AttachmentService
 import grails.test.mixin.integration.Integration
 import com.bertramlabs.plugins.karman.StorageProvider
 import com.neilab.plugins.remora.test.Profile
