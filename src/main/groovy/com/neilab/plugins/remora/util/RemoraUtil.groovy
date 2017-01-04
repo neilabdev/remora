@@ -16,7 +16,7 @@ class RemoraUtil {
     ]
 
     public static def getConfig() {
-        Holders.config?.remora
+        Holders.config?.grails.plugin.remora ?:  Holders.config?.remora
     }
 
     public static List pathComponents(String path) {

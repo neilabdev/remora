@@ -20,7 +20,7 @@ class AttachmentUserType implements UserType {
 
     @Override
     int[] sqlTypes() {
-        return [Types.VARCHAR]
+        return [Types.LONGVARCHAR]
     }
 
     @Override
@@ -63,7 +63,7 @@ class AttachmentUserType implements UserType {
         } else if (value instanceof String) {
             st.setString(index, value.toString() as String)
         } else {
-            st.setNull(index, Types.VARCHAR)
+            st.setNull(index, Types.LONGVARCHAR)
         }
 
     }
@@ -82,7 +82,7 @@ class AttachmentUserType implements UserType {
         } else if (value instanceof String) {
             st.setString(index, value.toString() as String)
         } else {
-            st.setNull(index, Types.VARCHAR)
+            st.setNull(index, Types.LONGVARCHAR)
         }
 
     }

@@ -151,7 +151,7 @@ class Attachment implements Serializable, Validateable  {
         def storageOptions = getStorageOptions()
         def bucket = storageOptions.bucket ?: '.'
         def path = storageOptions.path ?: ''
-        def providerOptions = storageOptions.providerOptions.clone()
+        def providerOptions = storageOptions.providerOptions?.clone() ?: [:] //FIXME: If providerOptions required and not present, throw exception noting the issue
         def provider = StorageProvider.create(providerOptions)
         def providerPath = joinPath(evaluatedPath(path, ORIGINAL_STYLE),fileNameForType(ORIGINAL_STYLE))
         def originalStyle  = this.options?.styles?."${ORIGINAL_STYLE}"

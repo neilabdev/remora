@@ -9,7 +9,7 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
+     //   classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.8.2"
         classpath "org.grails.plugins:hibernate4:5.0.10"
     }
 }
@@ -22,7 +22,7 @@ apply plugin: "idea"
 apply plugin: "org.grails.grails-plugin"
 apply plugin: "org.grails.grails-plugin-publish"
 apply plugin: "org.grails.grails-gsp"
-apply plugin: "asset-pipeline"
+//apply plugin: "asset-pipeline"
 
 ext {
     grailsVersion = project.grailsVersion
@@ -46,7 +46,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
+    provided "org.springframework.boot:spring-boot-starter-tomcat"
     compile "org.grails:grails-dependencies"
     compile "org.grails:grails-web-boot"
     compile "org.grails.plugins:cache"
@@ -58,7 +58,7 @@ dependencies {
     testCompile "org.grails:grails-plugin-testing"
     compile "org.grails:grails-plugin-validation"
     compile "org.hibernate:hibernate-ehcache"
-    compile 'org.grails.plugins:hibernate4'
+    compile 'org.grails.plugins:hibernate5'
 
     compile 'com.bertramlabs.plugins:karman-grails:0.9.21'
     compile group: 'org.imgscalr', name: 'imgscalr-lib', version: '4.2'
@@ -79,9 +79,10 @@ grailsPublish {
     websiteUrl = "https://github.com/neilabdev/remora"
 }
 
+/*
 assets {
     packagePlugin = true
-}
+} */
 
 jar {
     exclude "com/neilab/plugins/remora/test/**/**"
