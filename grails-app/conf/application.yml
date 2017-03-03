@@ -58,7 +58,7 @@ remora:
     providerOptions:
       provider: 'local'
       basePath: 'storage'
-      baseUrl: 'http://localhost:8080/image-com.neilab.plugins.remora.test/storage'
+      baseUrl: 'http://localhost:8080/image-test/storage'
     mime:
         disable:
             accept:
