@@ -20,7 +20,7 @@ class ImageResizer {
     Attachment attachment
 
     def process() {
-        def formatName = formatNameFromContentType(attachment.contentType)
+        def formatName = formatNameFromContentType(attachment.contentType) //TODO: if no contentType exists, this fails silently and return on #28
         def styleOptions = attachment.options?.styles
         def image = null
 
