@@ -29,10 +29,8 @@ class ImageResizer {
         }
 
         styleOptions.each {styleName,styleValue->
-
             def style = [format: formatName] + (styleValue?.clone() ?: [:])
             if(validStyle(attachment,styleName,style)) {
-
                 image = image ?: ImageIO.read( attachment.fileBytes ? new ByteArrayInputStream(attachment.fileBytes) : attachment.inputStream)
                 processStyle(styleName, style, image)
             }
@@ -88,6 +86,9 @@ class ImageResizer {
                 def options_width = options.width ?: image.width as Integer
                 def options_height = options.height ?: image.height as Integer
                 def should_crop = options.width && options.height
+                def isPortrait = image.height > image.width
+                def isSquare = image.height == image.width
+
 
                 if(should_crop) {
                     outputImage = Scalr.resize(image, Scalr.Method.AUTOMATIC, mode, options_width, options_height, Scalr.OP_ANTIALIAS)

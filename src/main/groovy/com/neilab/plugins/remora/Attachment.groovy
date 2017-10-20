@@ -14,13 +14,25 @@ import org.springframework.web.multipart.MultipartFile
 import grails.validation.Validateable
 
 class Attachment implements Serializable, Validateable  {
-    private String ORIGINAL_STYLE= RemoraUtil.ORIGINAL_STYLE
+    enum Layout {
+        NONE(0), PORTRAIT(1), LANDSCAPE(2), SQUARE(3)
+        private final int layoutValue
+        Layout(int value) {
+            this.layoutValue = value
+        }
+
+        Integer getValue() {
+            return layoutValue
+        }
+    }
+    private String ORIGINAL_STYLE = RemoraUtil.ORIGINAL_STYLE
     String name
     String originalFilename
     String contentType
     Long size
     String propertyName // name of attachment Model.attachmentPropertyName
     String domainName //name of domain attached to
+    Integer layout = Layout.NONE
 
     def options = [:]
     def overrides = [:]
@@ -30,7 +42,10 @@ class Attachment implements Serializable, Validateable  {
     InputStream fileStream
     byte[] fileBytes
 
-    private static serialProperties = ['name', 'originalFilename', 'contentType', 'size', 'propertyName', 'domainName']
+    private static serialProperties = [
+            'name', 'originalFilename', 'contentType', 'size', 'propertyName', 'domainName','layout'
+    ]
+    
 
     static validateable = serialProperties
 
@@ -40,6 +55,7 @@ class Attachment implements Serializable, Validateable  {
         contentType blank: false, nullable: false
         propertyName nullable: false
         domainName nullable: false
+        layout nullable: false
     }
 
     def beforeValidate() {
@@ -175,12 +191,13 @@ class Attachment implements Serializable, Validateable  {
         fileBytes = fileStream = null
     }
 
-    def saveProcessedStyle(typeName, byte[] bytes) {
+    def saveProcessedStyle(Map options = [:], typeName, byte[] bytes) {
         def cloudFile = getCloudFile(typeName)
         def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
 
         if([ORIGINAL_STYLE].contains(typeName)) {
             size = bytes.length
+            layout =  options.layout as Integer ?: Layout.NONE.value
             assignAttributes()
         }
 
