@@ -91,4 +91,20 @@ class Remora {
     }
 
 
+    static boolean isCascadingEntity(def params=[:]) {
+        def options = [
+                object:null,
+                field: null
+        ] << params
+
+        def object = options.object // domainClass
+        def field = options.field // Object.fieldName
+
+
+
+        return true
+
+    }
+
+
 }

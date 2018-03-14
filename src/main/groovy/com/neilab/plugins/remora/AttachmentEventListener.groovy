@@ -62,39 +62,37 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
     }
 
     void postLoad(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
+        applyPropertyOptions(event.entityObject, attachmentFields)
     }
 
     void postDelete(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
         for (attachmentProperty in attachmentFields) {
-            def attachment = event.entityObject."${attachmentProperty.name}"
+            def attachment = applyPropertyOption(event.entityObject,attachmentProperty)
             attachment?.delete()
         }
     }
 
     void validateAttachment(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
         for (attachmentProperty in attachmentFields) {
-            def attachment = event.entityObject."${attachmentProperty.name}" as Attachment
+            def attachment = applyPropertyOption(event.entityObject,attachmentProperty) as Attachment
             attachment?.verify()
         }
     }
 
     void saveAttachment(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
         for (attachmentProperty in attachmentFields) {
-            def attachment = event.entityObject."${attachmentProperty.name}"
+            def attachment = applyPropertyOption(event.entityObject,attachmentProperty)
             if (event.entityObject.isDirty(attachmentProperty.name)) {
                 def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
                 def attachmentOptions = entityOptions?."${attachmentProperty.name}"
                 def originalAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
                 if (originalAttachment) {
-                    originalAttachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
+                    applyPropertyOption(event.entityObject,attachmentProperty, attachment: originalAttachment)?.delete()
+                  /*  originalAttachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
                     originalAttachment.propertyName = attachmentProperty.name
                     originalAttachment.options = attachmentOptions ?: [:]
                     originalAttachment.parentEntity = event.entityObject
-                    originalAttachment.delete()
+                    originalAttachment.delete() */
                 }
             }
             attachment?.save()
@@ -105,19 +103,30 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         event?.entityObject ? Remora.registeredProperties(event.entityObject.class) : null
     }
 
-    static protected applyPropertyOptions(event, attachmentFields) {
-        for (attachmentProperty in attachmentFields) {
-            def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
-            def asEntity = entityOptions."${attachmentProperty.name}".as
-            def attachmentOptions = entityOptions?."${attachmentProperty.name}"
-            def attachment = event.entityObject."${attachmentProperty.name}"
+    static protected Attachment applyPropertyOption(Map params=[:],entityObject,attachmentProperty) {
+        def entityOptions = Remora.registeredMapping(entityObject.getClass())
+     //   def asEntity = entityOptions."${attachmentProperty.name}"?.as
+        def attachmentOptions = entityOptions?."${attachmentProperty.name}"
+        def attachment = params.containsKey("attachment") ? params["attachment"] :
+                entityObject."${attachmentProperty.name}"
 
-            if (attachment) {
-                attachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
-                attachment.propertyName = attachmentProperty.name
-                attachment.options = attachmentOptions ?: [:]
-                attachment.parentEntity = event.entityObject
-            }
+        if(Remora.isCascadingEntity(object: entityObject, field: attachmentProperty.name )) {
+
+        }
+
+        if (attachment) {
+            attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass())
+            attachment.propertyName = attachmentProperty.name
+            attachment.options = attachmentOptions ?: [:]
+            attachment.parentEntity = entityObject
+        }
+
+        return attachment
+    }
+
+    static protected applyPropertyOptions(entityObject, attachmentFields) {
+        for (attachmentProperty in attachmentFields) {
+            applyPropertyOption(entityObject,attachmentProperty)
         }
     }
 
