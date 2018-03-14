@@ -53,25 +53,41 @@ class Remora {
 
         Map remora_mapping =  merge_map_dsl.call(domainClass.clazz)
 
-        registeredMapping[clazz] = remora_mapping
-        registeredProperties[clazz] = domainClass.properties.findAll { it.type == Attachment } ?: null
-        registeredDomains[clazz] =  true
+        registeredMapping[clazz.name] = remora_mapping
+        registeredProperties[clazz.name] = domainClass.properties.findAll { it.type == Attachment } ?: null
+        registeredDomains[clazz.name] =  true
     }
 
     public static boolean registeredClass(Class clazz) {
-        registeredDomains.containsKey(clazz)
+       return registeredClass(clazz.name)
     }
 
     public static List<GrailsDomainClassProperty> registeredProperties(Class clazz) {
-        registeredProperties[clazz]
+        return registeredProperties(clazz.name)
     }
 
     public static Map registeredMapping(Class clazz) {
-        registeredMapping[clazz]
+        return registeredMapping(clazz.name)
     }
 
     public static def config(Class clazz) {
-        registeredDomains[clazz]
+        return config(clazz.name)
+    }
+
+    public static boolean registeredClass(String clazzName) {
+        registeredDomains.containsKey(clazzName)
+    }
+
+    public static List<GrailsDomainClassProperty> registeredProperties(String clazzName) {
+        registeredProperties[clazzName]
+    }
+
+    public static Map registeredMapping(String clazzName) {
+        registeredMapping[clazzName]
+    }
+
+    public static def config(String clazzName) {
+        registeredDomains[clazzName]
     }
 
 

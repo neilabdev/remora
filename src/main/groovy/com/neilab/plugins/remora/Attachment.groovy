@@ -14,7 +14,17 @@ import org.springframework.web.multipart.MultipartFile
 import grails.validation.Validateable
 
 class Attachment implements Serializable, Validateable  {
-    private String ORIGINAL_STYLE= RemoraUtil.ORIGINAL_STYLE
+
+    public static enum CascadeType {
+        ALL, // default PERSIST|REMOVE
+        PERSIST, // save or update should persist file to storage location
+        REMOVE,  // removing Parent shoudl remove attachement
+        NONE,
+        READONLY
+    }
+
+
+    private String ORIGINAL_STYLE = RemoraUtil.ORIGINAL_STYLE
     String name
     String originalFilename
     String contentType
@@ -157,7 +167,7 @@ class Attachment implements Serializable, Validateable  {
         def originalStyle  = this.options?.styles?."${ORIGINAL_STYLE}"
         def mimeType = Mimetypes.instance.getMimetype(name?.toLowerCase())
         def isImage = mimeType.startsWith("image")
-
+        //TODO: DETERMINE IF SAVE SHOULD PERSIST
         // First lets upload the original
         if (fileStream && name) {
             fileBytes = fileStream.bytes
@@ -197,6 +207,7 @@ class Attachment implements Serializable, Validateable  {
         def path = storageOptions.path ?: ''
         def provider = StorageProvider.create(storageOptions.providerOptions.clone())
         def bucket = storageOptions.bucket ?: '.'
+        //TODO: DETERMINE IF DELTE SHOULD PERSIST
 
         for (type in styles) {
             def joinedPath = joinPath(evaluatedPath(path, type), fileNameForType(type))

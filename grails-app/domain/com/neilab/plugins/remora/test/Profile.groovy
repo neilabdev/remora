@@ -24,12 +24,14 @@ class Profile {
                     storage: [
                             url: "/:id/:type/:style/:propertyName/",
                             path: "attachment/:domainName/:propertyName/:id"
-                    ]
+                    ],
+                    cascade: Attachment.CascadeType.ALL // all is default, thus this field is optional
             ],
 
             storage: [
                 bucket:'default'
             ]
+
     ]
 
 
