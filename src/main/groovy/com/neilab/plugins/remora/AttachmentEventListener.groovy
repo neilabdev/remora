@@ -88,11 +88,6 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
                 def originalAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
                 if (originalAttachment) {
                     applyPropertyOption(event.entityObject,attachmentProperty, attachment: originalAttachment)?.delete()
-                  /*  originalAttachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
-                    originalAttachment.propertyName = attachmentProperty.name
-                    originalAttachment.options = attachmentOptions ?: [:]
-                    originalAttachment.parentEntity = event.entityObject
-                    originalAttachment.delete() */
                 }
             }
             attachment?.save()
@@ -107,15 +102,14 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         def entityOptions = Remora.registeredMapping(entityObject.getClass())
      //   def asEntity = entityOptions."${attachmentProperty.name}"?.as
         def attachmentOptions = entityOptions?."${attachmentProperty.name}"
-        def attachment = params.containsKey("attachment") ? params["attachment"] :
-                entityObject."${attachmentProperty.name}"
+        def attachment = (params.containsKey("attachment") ? params["attachment"] :
+                entityObject."${attachmentProperty.name}" ) as Attachment
 
-        if(Remora.isCascadingEntity(object: entityObject, field: attachmentProperty.name )) {
-
-        }
+        //if(Remora.isCascadingEntity(object: entityObject, field: attachmentProperty.name )) { }
 
         if (attachment) {
             attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass())
+            attachment.domainIdentity = entityObject.ident()
             attachment.propertyName = attachmentProperty.name
             attachment.options = attachmentOptions ?: [:]
             attachment.parentEntity = entityObject
@@ -129,5 +123,4 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
             applyPropertyOption(entityObject,attachmentProperty)
         }
     }
-
 }

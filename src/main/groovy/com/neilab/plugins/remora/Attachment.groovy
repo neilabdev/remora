@@ -15,7 +15,7 @@ import grails.validation.Validateable
 
 class Attachment implements Serializable, Validateable  {
 
-    public static enum CascadeType {
+    static enum CascadeType {
         ALL, // default PERSIST|REMOVE
         PERSIST, // save or update should persist file to storage location
         REMOVE,  // removing Parent shoudl remove attachement
@@ -31,6 +31,7 @@ class Attachment implements Serializable, Validateable  {
     Long size
     String propertyName // name of attachment Model.attachmentPropertyName
     String domainName //name of domain attached to
+    def domainIdentity
 
     def options = [:]
     def overrides = [:]
@@ -40,7 +41,8 @@ class Attachment implements Serializable, Validateable  {
     InputStream fileStream
     byte[] fileBytes
 
-    private static serialProperties = ['name', 'originalFilename', 'contentType', 'size', 'propertyName', 'domainName']
+    private static serialProperties = ['name', 'originalFilename', 'contentType', 'size',
+                                       'propertyName', 'domainName','domainIdentity']
 
     static validateable = serialProperties
 
@@ -50,23 +52,24 @@ class Attachment implements Serializable, Validateable  {
         contentType blank: false, nullable: false
         propertyName nullable: false
         domainName nullable: false
+        domainIdentity nullable: true
     }
 
     def beforeValidate() {
         assignAttributes()
     }
 
-    public Attachment(String jsonText) {
+    Attachment(String jsonText) {
         // attachmentProperties = jsonText ? new JsonSlurper().parseText(jsonText) : [:]
         if (jsonText)
             fromJson(jsonText)
     }
 
-    public Attachment(Map map) {
+    Attachment(Map map) {
         map?.each { k, v -> this[k] = v }
     }
 
-    public Attachment(Map map=[:],MultipartFile file) {
+    Attachment(Map map=[:],MultipartFile file) {
         contentType = file.contentType
         name = originalFilename = file.originalFilename
         size = file.size
@@ -74,14 +77,14 @@ class Attachment implements Serializable, Validateable  {
         map?.each { k, v -> this[k] = v }
     }
 
-    public Attachment(InputStream stream, fileName,mimeType = null) {
+    Attachment(InputStream stream, fileName,mimeType = null) {
         size = stream.available()
         fileStream=stream
         name = originalFilename = fileName
         contentType = mimeType ?: Mimetypes.instance.getMimetype(name.toLowerCase())
     }
 
-    public Attachment(Map map=[:],File file) {
+    Attachment(Map map=[:],File file) {
         originalFilename = name = file.name
         size = file.size()
         contentType = Mimetypes.instance.getMimetype(name.toLowerCase())
@@ -283,6 +286,10 @@ class Attachment implements Serializable, Validateable  {
     }
 
     protected String evaluatedPath(String input, type = ORIGINAL_STYLE) {
-        RemoraUtil.evaluatePath(input,parentEntity,propertyName,type)
+        RemoraUtil.evaluatePath(input,parentEntity,this,type)
+    }
+
+    protected Class getParentEntityClass() {
+        return RemoraUtil.getEntityClass(this.parentEntity)
     }
 }
