@@ -8,6 +8,10 @@ class Profile {
     String fileName
     Attachment file
 
+    Attachment preview1
+    Attachment preview2
+    Attachment preview3
+
     static hasMany = [uploads: Upload]
 
     static remora = [
@@ -28,6 +32,16 @@ class Profile {
                     cascade: Attachment.CascadeType.ALL // all is default, thus this field is optional
             ],
 
+            preview1: [
+                    cascade: Attachment.CascadeType.READONLY, as: Upload
+            ],
+            preview2: [
+                    cascade: Attachment.CascadeType.READONLY, as: Upload
+            ],
+            preview3: [
+                    cascade: Attachment.CascadeType.READONLY, as: Upload
+            ],
+
             storage: [
                 bucket:'default'
             ]
@@ -40,6 +54,9 @@ class Profile {
     static constraints = {
         file nullable:true
         fileName nullable:true
+        preview1 nullable: true
+        preview2 nullable: true
+        preview3 nullable: true
     }
     static mapping = {
         file type: AttachmentUserType

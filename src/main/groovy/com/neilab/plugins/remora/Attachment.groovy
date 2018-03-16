@@ -31,6 +31,8 @@ class Attachment implements Serializable, Validateable  {
     Long size
     String propertyName // name of attachment Model.attachmentPropertyName
     String domainName //name of domain attached to
+    String domainClass
+    Boolean domainCopied
     def domainIdentity
 
     def options = [:]
@@ -40,9 +42,11 @@ class Attachment implements Serializable, Validateable  {
 
     InputStream fileStream
     byte[] fileBytes
+    protected boolean persisted = false
+    //protected boolean copied = false
 
     private static serialProperties = ['name', 'originalFilename', 'contentType', 'size',
-                                       'propertyName', 'domainName','domainIdentity']
+                                       'propertyName', 'domainName','domainClass','domainIdentity','domainCopied']
 
     static validateable = serialProperties
 
@@ -52,14 +56,29 @@ class Attachment implements Serializable, Validateable  {
         contentType blank: false, nullable: false
         propertyName nullable: false
         domainName nullable: false
-        domainIdentity nullable: true
+        domainClass nullable: true //should assume parentEntity class if null
+        domainCopied nullable: true
+        domainIdentity nullable: true,  validator: { val, obj ->
+            true
+        }
     }
 
     def beforeValidate() {
         assignAttributes()
     }
 
-    Attachment(String jsonText) {
+    protected Attachment(Attachment copy) {
+
+        serialProperties.each { name ->
+            this[name] = copy[name]
+        }
+        this.persisted = copy.isPersisted
+        this.options = copy.options
+        this.overrides = copy.overrides
+        this.domainCopied = true
+    }
+
+    Attachment(String jsonText) { //set readonly
         // attachmentProperties = jsonText ? new JsonSlurper().parseText(jsonText) : [:]
         if (jsonText)
             fromJson(jsonText)
@@ -93,6 +112,8 @@ class Attachment implements Serializable, Validateable  {
     }
 
     def verify() {
+        if(this.isPersisted)
+            return
         validate(validateable) //todo: optimize so that validation only called per request/update/validate/save
 
         if(this.hasErrors()) {
@@ -109,13 +130,16 @@ class Attachment implements Serializable, Validateable  {
         def jsonSlurper = new JsonSlurper()
         Map jsonMap = jsonSlurper.parseText(jsonText)
         jsonMap.each { k, v -> if (serialProperties.contains(k)) this[k] = v }
+        this.persisted = true
     }
 
     def toJson() {
         Map p = [:]
         serialProperties.each { name ->
-            p[name] = this[name]
+            if(this[name] != null)
+                p[name] = this[name]
         }
+
         JsonOutput.toJson(p)
     }
 
@@ -186,6 +210,7 @@ class Attachment implements Serializable, Validateable  {
             }
         }
         fileBytes = fileStream = null
+        persisted = true
     }
 
     def saveProcessedStyle(typeName, byte[] bytes) {
@@ -254,10 +279,31 @@ class Attachment implements Serializable, Validateable  {
         attachmentInfo.prefix
     }
 
+    Attachment getCopy() {
+        if(!this.isPersisted)
+            throw new IllegalStateException("Attempting to copy an Attachment that is not persisted")
+        return new Attachment(this)
+    }
+
+    boolean getIsPersisted() {
+        return persisted
+    }
+
+    boolean  getIsReadOnly() {
+        return this.isPersisted
+    }
+
+    boolean getIsCopied() {
+        return this.domainCopied ?: false
+    }
+
     protected def assignAttributes() {
+        if(this.isCopied)  //TODO: assign should be local to parent enity (or not supported by copies
+            return
         this.options.assign?.each { k, v ->
-            if (this.hasProperty(k) && this.parentEntity?.hasProperty(v)) {
-                this.parentEntity[v] = this[k]
+            if (owner.hasProperty(k) && owner.parentEntity?.hasProperty(v)) {
+                def value =  owner[k]
+                owner.parentEntity[v] = value
             }
         }
     }

@@ -29,34 +29,31 @@ class AttachmentUserType implements UserType {
     }
 
     @Override
-    public Object assemble(Serializable cached, Object owner) throws HibernateException {
+    Object assemble(Serializable cached, Object owner) throws HibernateException {
         return cached;
     }
 
     @Override
-    public Serializable disassemble(Object value) throws HibernateException {
+    Serializable disassemble(Object value) throws HibernateException {
         return (Serializable) value;
     }
 
     @Override
-    public boolean equals(Object x, Object y) throws HibernateException {
+    boolean equals(Object x, Object y) throws HibernateException {
         return x == null ? y == null : x.equals(y);
     }
 
     @Override
-    public int hashCode(Object value) throws HibernateException {
+    int hashCode(Object value) throws HibernateException {
         return value == null ? 0 : value.hashCode();
     }
-
 
     Object nullSafeGet(ResultSet rs, String[] names, SessionImplementor session, Object owner) throws HibernateException, SQLException {
         def result = rs.getString(names[0])
         return result ? new Attachment(result) : null
     }
 
-
     void nullSafeSet(PreparedStatement st, Object value, int index, SessionImplementor session) throws HibernateException, SQLException {
-
         if (value instanceof Attachment) {
             Attachment attachment = value
             st.setString(index, attachment.toJson() as String)
@@ -65,7 +62,6 @@ class AttachmentUserType implements UserType {
         } else {
             st.setNull(index, Types.LONGVARCHAR)
         }
-
     }
 
     Object nullSafeGet(ResultSet rs, String[] names, Object o) throws HibernateException, SQLException {
@@ -75,7 +71,6 @@ class AttachmentUserType implements UserType {
 
 
     void nullSafeSet(PreparedStatement st, Object value, int index) throws HibernateException, SQLException {
-
         if (value instanceof Attachment) {
             Attachment attachment = value
             st.setString(index, attachment.toJson() as String)
@@ -84,7 +79,6 @@ class AttachmentUserType implements UserType {
         } else {
             st.setNull(index, Types.LONGVARCHAR)
         }
-
     }
 
     @Override

@@ -99,20 +99,27 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
     }
 
     static protected Attachment applyPropertyOption(Map params=[:],entityObject,attachmentProperty) {
-        def entityOptions = Remora.registeredMapping(entityObject.getClass())
-     //   def asEntity = entityOptions."${attachmentProperty.name}"?.as
-        def attachmentOptions = entityOptions?."${attachmentProperty.name}"
         def attachment = (params.containsKey("attachment") ? params["attachment"] :
                 entityObject."${attachmentProperty.name}" ) as Attachment
+        def entityOptions =    Remora.registeredMapping(entityObject.getClass())
+        def copyOptions = attachment?.isCopied ?
+                Remora.registeredMapping(attachment.domainClass) : [:]
+        def attachmentOptions =  attachment?.isCopied ?
+                copyOptions?."${attachment.propertyName}" :
+                entityOptions?."${attachmentProperty.name}"
 
         //if(Remora.isCascadingEntity(object: entityObject, field: attachmentProperty.name )) { }
 
         if (attachment) {
-            attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass())
-            attachment.domainIdentity = entityObject.ident()
-            attachment.propertyName = attachmentProperty.name
-            attachment.options = attachmentOptions ?: [:]
             attachment.parentEntity = entityObject
+            attachment.options = attachmentOptions ?: [:]
+            if(!attachment?.isCopied) {
+                attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass()) //if masquerading, this will be parent
+                attachment.domainClass = entityObject.getClass().name
+                attachment.domainIdentity = entityObject.ident() //if masquerading, this will be parent
+                attachment.propertyName = attachmentProperty.name
+
+            }
         }
 
         return attachment

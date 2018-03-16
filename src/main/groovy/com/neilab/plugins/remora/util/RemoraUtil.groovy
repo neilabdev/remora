@@ -28,7 +28,10 @@ class RemoraUtil {
 
     static Map attachmentInfo(def hostEntity, String paramName, String style = ORIGINAL_STYLE) {
         Attachment attachment = hostEntity[paramName]
-        attachmentInfo(hostEntity, attachment, style)
+        if(!attachment) {
+            return null
+        }
+        attachmentInfo(hostEntity, (Attachment)attachment, style)
     }
 
     static Map attachmentInfo(def hostEntity, Attachment attachment, String style = ORIGINAL_STYLE) {
@@ -69,8 +72,8 @@ class RemoraUtil {
 
     static String evaluatePath(String path,
                                       def hostEntity, Attachment attachment, String styleName = ORIGINAL_STYLE) {
-        Class clazz = getEntityClass(hostEntity)
-        def parentIdentity = getEntityIdentity(hostEntity) ?: attachment.domainIdentity
+        Class clazz = getEntityClass(hostEntity,attachment)
+        def parentIdentity = getEntityIdentity(hostEntity,attachment)// ?: attachment.domainIdentity
         String propertyName = attachment.propertyName
         String style = styleName ?: 'original' // change 'original' to originalStyle .. this should never be null
         path?.replace(":class", "${GrailsNameUtils.getShortName(clazz)}").
@@ -89,7 +92,7 @@ class RemoraUtil {
 
     static Map storageOptions(Map params = [:], def hostEntity, Attachment persistedAttachment) {
         def options = [:] << params
-        Class parentClass = getEntityClass(hostEntity)
+        Class parentClass = getEntityClass(hostEntity,persistedAttachment)
         storageOptions(parentClass, persistedAttachment.domainName,
                 persistedAttachment.propertyName, persistedAttachment.options + options)
     }
@@ -101,7 +104,9 @@ class RemoraUtil {
                 config?.domain?."${domainName}"?.storage ?: // grails.plugin.remora.domain.<domain>.storage ?:
                         config?.storage ?: [:] // grails.plugin.remora.storage
         if (GrailsClassUtils.isStaticProperty(clazz, "remora") && clazz?."remora" instanceof Map) {
-            storage_options = storage_options + (clazz?."remora"?.storage ?: [:]) // Model.remora.storage
+            Map instanceOptions = clazz?."remora"
+            storage_options = storage_options + (instanceOptions.storage ?: [:]) // Model.remora.storage
+            storage_options = storage_options + (instanceOptions."${propertyName}"?.storage ?: [:]) // Model.remora.storage
         }
         storage_options = storage_options + (options?."${propertyName}"?.storage ?: options?.storage ?: [:])
         //Model.remora.properyName.storage
@@ -118,11 +123,15 @@ class RemoraUtil {
         storage_options
     }
 
-    static def getEntityIdentity(def entity) {
-        return entity?.ident() //TODO: ensure hostentY has ident? or domainIdentity
+    static def getEntityIdentity(def entity, Attachment attachment=null) {
+        if(attachment?.isPersisted)
+            return attachment.domainIdentity ?: entity?.ident()
+        return entity?.ident()
     }
 
-    static Class getEntityClass(def type) {
+    static Class getEntityClass(def type, Attachment attachment=null) {
+        if(attachment?.isCopied)
+            return Class.forName(attachment.domainClass)
         if (type instanceof String) {
             return Class.forName(type)
         } else  {

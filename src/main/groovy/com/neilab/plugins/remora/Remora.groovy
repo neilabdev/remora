@@ -26,7 +26,7 @@ class Remora {
             result
         }
     }
-    public static void registerDomain(GrailsDomainClass domainClass) {
+    static void registerDomain(GrailsDomainClass domainClass) {
         Class clazz = domainClass.clazz
 
         def merge_map_dsl = { Class domainParam ->
@@ -58,35 +58,35 @@ class Remora {
         registeredDomains[clazz.name] =  true
     }
 
-    public static boolean registeredClass(Class clazz) {
+    static boolean registeredClass(Class clazz) {
        return registeredClass(clazz.name)
     }
 
-    public static List<GrailsDomainClassProperty> registeredProperties(Class clazz) {
+    static List<GrailsDomainClassProperty> registeredProperties(Class clazz) {
         return registeredProperties(clazz.name)
     }
 
-    public static Map registeredMapping(Class clazz) {
+    static Map registeredMapping(Class clazz) {
         return registeredMapping(clazz.name)
     }
 
-    public static def config(Class clazz) {
+    static def config(Class clazz) {
         return config(clazz.name)
     }
 
-    public static boolean registeredClass(String clazzName) {
+    static boolean registeredClass(String clazzName) {
         registeredDomains.containsKey(clazzName)
     }
 
-    public static List<GrailsDomainClassProperty> registeredProperties(String clazzName) {
+    static List<GrailsDomainClassProperty> registeredProperties(String clazzName) {
         registeredProperties[clazzName]
     }
 
-    public static Map registeredMapping(String clazzName) {
+    static Map registeredMapping(String clazzName) {
         registeredMapping[clazzName]
     }
 
-    public static def config(String clazzName) {
+    static def config(String clazzName) {
         registeredDomains[clazzName]
     }
 
