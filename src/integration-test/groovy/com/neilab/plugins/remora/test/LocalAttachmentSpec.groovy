@@ -74,7 +74,7 @@ class LocalAttachmentSpec extends Specification {
     }
 
 
-    void "Attachment should save file via relational model"() {
+    void "Attachment should save and copy file via relational model "() {
         given:
             def resource = [
                     file1: grailsResourceLocator.findResourceForURI("/images/test/liberty_lover.jpg").file,
@@ -93,6 +93,12 @@ class LocalAttachmentSpec extends Specification {
             def attachmentInfo = attachmentService[profile]
             def uploads = profile.refresh().uploads
             def prefix = profile.file.prefix
+            def uploads_prefix = [
+                    file1: uploads[0].file.prefix,
+                    file2: uploads[1].file.prefix,
+                    file3: uploads[2].file.prefix
+
+            ]
         then:
             uploads.size() == 3
             uploads[0].size == 388935
@@ -125,7 +131,7 @@ class LocalAttachmentSpec extends Specification {
             profile.fileName == profile.file.name
             profile.file.url != null
             profile.file.cloudFile.contentLength == resource.file1.size()
-
+        and:
             profile.preview1.name == "liberty_lover.jpg"
             profile.preview1.originalFilename == "liberty_lover.jpg"
             profile.preview1.size == 388935
@@ -137,9 +143,16 @@ class LocalAttachmentSpec extends Specification {
             uploads[0].file.getCloudFile("thumb").name.endsWith(".png") == true
             profile.preview1.getCloudFile("thumb").name.endsWith(".png") == true
             provider['default'].listFiles(prefix: "${prefix}/" as String).size() == 3
+        //uploads_prefix
+            provider['default'].listFiles(prefix: "${uploads_prefix.file1}/" as String).size() == 3
+            provider['default'].listFiles(prefix: "${uploads_prefix.file2}/" as String).size() == 3
+            provider['default'].listFiles(prefix: "${uploads_prefix.file3}/" as String).size() == 3
         when: "Deleting model"
             profile.delete(failOnError: true, flush: true)
         then:
             provider['default'].listFiles(prefix: "${prefix}/" as String).size() == 0
+            provider['default'].listFiles(prefix: "${uploads_prefix.file1}/" as String).size() == 0
+            provider['default'].listFiles(prefix: "${uploads_prefix.file2}/" as String).size() == 0
+            provider['default'].listFiles(prefix: "${uploads_prefix.file3}/" as String).size() == 0
     }
 }

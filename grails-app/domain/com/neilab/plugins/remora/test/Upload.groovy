@@ -28,6 +28,9 @@ class Upload {
                             url: "/:id/:type/:style/:propertyName/",
                             path: "attachment/:domainName/:propertyName/:id"
                     ],
+            ],
+            storage: [
+                    bucket:'default'
             ]
     ]
 }
