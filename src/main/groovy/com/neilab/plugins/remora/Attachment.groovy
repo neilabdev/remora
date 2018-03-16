@@ -29,6 +29,7 @@ class Attachment implements Serializable, Validateable  {
     String originalFilename
     String contentType
     Long size
+    String parentPropertyName
     String propertyName // name of attachment Model.attachmentPropertyName
     String domainName //name of domain attached to
     String domainClass
@@ -56,11 +57,20 @@ class Attachment implements Serializable, Validateable  {
         contentType blank: false, nullable: false
         propertyName nullable: false
         domainName nullable: false
-        domainClass nullable: true //should assume parentEntity class if null
-        domainCopied nullable: true
-        domainIdentity nullable: true,  validator: { val, obj ->
+        domainClass nullable: true, validator: { val, Attachment obj ->
+            if(obj.isCopied && obj.parentPropertyName) { //TODO: Refactor to helper methods.. make cleaner
+                def registerdMapping = Remora.registeredMapping(obj.parentEntityClass)
+                def requiredClass = registerdMapping?."${obj.parentPropertyName}"?.as
+                 if(requiredClass ) {
+                     return  RemoraUtil.getIsMatchingTypes(requiredClass,obj.domainClass)
+                 }
+                return true
+            }
             true
-        }
+        } //should assume parentEntity class if null
+        domainCopied nullable: true
+        domainIdentity nullable: true
+        parentPropertyName nullable: true
     }
 
     def beforeValidate() {
@@ -112,8 +122,8 @@ class Attachment implements Serializable, Validateable  {
     }
 
     def verify() {
-        if(this.isPersisted)
-            return
+     //   if(this.isPersisted)
+     //       return
         validate(validateable) //todo: optimize so that validation only called per request/update/validate/save
 
         if(this.hasErrors()) {

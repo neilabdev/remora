@@ -36,7 +36,7 @@ class Profile {
                     cascade: Attachment.CascadeType.READONLY, as: Upload
             ],
             preview2: [
-                    cascade: Attachment.CascadeType.READONLY, as: Upload
+                    cascade: Attachment.CascadeType.READONLY, as: Upload // as ensures Attachment is a copy from UPload class
             ],
             preview3: [
                     cascade: Attachment.CascadeType.READONLY, as: Upload

@@ -112,12 +112,13 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
 
         if (attachment) {
             attachment.parentEntity = entityObject
+            attachment.parentPropertyName = attachmentProperty.name
             attachment.options = attachmentOptions ?: [:]
             if(!attachment?.isCopied) {
                 attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass()) //if masquerading, this will be parent
                 attachment.domainClass = entityObject.getClass().name
                 attachment.domainIdentity = entityObject.ident() //if masquerading, this will be parent
-                attachment.propertyName = attachmentProperty.name
+                 attachment.propertyName = attachmentProperty.name
 
             }
         }

@@ -134,8 +134,16 @@ class RemoraUtil {
             return Class.forName(attachment.domainClass)
         if (type instanceof String) {
             return Class.forName(type)
+        } else if (type  instanceof Class) {
+            return type
         } else  {
             return type.getClass()
         }
+    }
+
+    static boolean getIsMatchingTypes(def type1, def type2) {
+        Class type1Class = getEntityClass(type1)
+        Class type2Class = getEntityClass(type2)
+        return type1Class == type2Class
     }
 }
