@@ -3,6 +3,7 @@ package com.neilab.plugins.remora
 import com.neilab.plugins.remora.Attachment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
+import groovy.util.logging.Log4j
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEventListener
@@ -12,6 +13,7 @@ import org.springframework.context.ApplicationEvent
 /**
  * Created by ghost on 7/24/15.
  */
+@Log4j
 class AttachmentEventListener extends AbstractPersistenceEventListener {
 
     private static String OPTIONS_KEY = "remora"
@@ -28,7 +30,7 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
             def entityObject = event.entityObject
             switch (event.eventType) {
                 case EventType.SaveOrUpdate:
-                    validateAttachment(event, attachmentFields)
+/**/                    validateAttachment(event, attachmentFields)
                     break
                 case EventType.Validation:
                     validateAttachment(event, attachmentFields)
@@ -39,7 +41,7 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
                     saveAttachment(event, attachmentFields)
                     break
                 case EventType.PreUpdate:
-                    saveAttachment(event, attachmentFields)
+                    saveAttachment(event, attachmentFields,true)
                     break
                 case EventType.PostUpdate:
                     break
@@ -79,18 +81,29 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         }
     }
 
-    void saveAttachment(final AbstractPersistenceEvent event, attachmentFields) {
+    void saveAttachment(final AbstractPersistenceEvent event, attachmentFields, boolean update = false) {
         for (attachmentProperty in attachmentFields) {
-            def attachment = applyPropertyOption(event.entityObject,attachmentProperty)
-            if (event.entityObject.isDirty(attachmentProperty.name)) {
-                def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
-                def attachmentOptions = entityOptions?."${attachmentProperty.name}"
-                def originalAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
-                if (originalAttachment) {
-                    applyPropertyOption(event.entityObject,attachmentProperty, attachment: originalAttachment)?.delete()
+            def entity = event.entityObject
+            def currentAttachment = event.entityObject."${attachmentProperty.name}"
+            def persistedAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
+            def shouldBeDirty = !currentAttachment.is(persistedAttachment)
+
+            boolean dirty = false
+
+            if(shouldBeDirty && shouldBeDirty != entity.isDirty(attachmentProperty.name) ) { //TODO: Figure out why some isDirty not always true
+                log.warn("Attachment for entity '${entity.class.name}' id: '${entity.id}' property: '${attachmentProperty.name}' should be dirty")
+            }
+
+            if(shouldBeDirty) {
+                dirty = true
+                if (persistedAttachment && !persistedAttachment.isReadOnly) {
+                    applyPropertyOption(event.entityObject,attachmentProperty, attachment: persistedAttachment)?.delete()
                 }
             }
-            attachment?.save()
+
+            if(!update || dirty) { //save if 'new' or 'updating'
+                applyPropertyOption(event.entityObject,attachmentProperty) ?.save(failOnError: true) //TODO: failOnError configurable?
+            }
         }
     }
 
@@ -118,8 +131,7 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
                 attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass()) //if masquerading, this will be parent
                 attachment.domainClass = entityObject.getClass().name
                 attachment.domainIdentity = entityObject.ident() //if masquerading, this will be parent
-                 attachment.propertyName = attachmentProperty.name
-
+                attachment.propertyName = attachmentProperty.name
             }
         }
 

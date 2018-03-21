@@ -13,7 +13,7 @@ import org.springframework.validation.FieldError
 import org.springframework.web.multipart.MultipartFile
 import grails.validation.Validateable
 
-class Attachment implements Serializable, Validateable  {
+class Attachment implements Serializable, Validateable {
 
     static enum CascadeType {
         ALL, // default PERSIST|REMOVE
@@ -47,7 +47,7 @@ class Attachment implements Serializable, Validateable  {
     //protected boolean copied = false
 
     private static serialProperties = ['name', 'originalFilename', 'contentType', 'size',
-                                       'propertyName', 'domainName','domainClass','domainIdentity','domainCopied']
+                                       'propertyName', 'domainName', 'domainClass', 'domainIdentity', 'domainCopied']
 
     static validateable = serialProperties
 
@@ -58,12 +58,12 @@ class Attachment implements Serializable, Validateable  {
         propertyName nullable: false
         domainName nullable: false
         domainClass nullable: true, validator: { val, Attachment obj ->
-            if(obj.isCopied && obj.parentPropertyName) { //TODO: Refactor to helper methods.. make cleaner
+            if (obj.isCopied && obj.parentPropertyName) { //TODO: Refactor to helper methods.. make cleaner
                 def registerdMapping = Remora.registeredMapping(obj.parentEntityClass)
                 def requiredClass = registerdMapping?."${obj.parentPropertyName}"?.as
-                 if(requiredClass ) {
-                     return  RemoraUtil.getIsMatchingTypes(requiredClass,obj.domainClass)
-                 }
+                if (requiredClass) {
+                    return RemoraUtil.getIsMatchingTypes(requiredClass, obj.domainClass)
+                }
                 return true
             }
             true
@@ -98,7 +98,7 @@ class Attachment implements Serializable, Validateable  {
         map?.each { k, v -> this[k] = v }
     }
 
-    Attachment(Map map=[:],MultipartFile file) {
+    Attachment(Map map = [:], MultipartFile file) {
         contentType = file.contentType
         name = originalFilename = file.originalFilename
         size = file.size
@@ -106,14 +106,14 @@ class Attachment implements Serializable, Validateable  {
         map?.each { k, v -> this[k] = v }
     }
 
-    Attachment(InputStream stream, fileName,mimeType = null) {
+    Attachment(InputStream stream, fileName, mimeType = null) {
         size = stream.available()
-        fileStream=stream
+        fileStream = stream
         name = originalFilename = fileName
         contentType = mimeType ?: Mimetypes.instance.getMimetype(name.toLowerCase())
     }
 
-    Attachment(Map map=[:],File file) {
+    Attachment(Map map = [:], File file) {
         originalFilename = name = file.name
         size = file.size()
         contentType = Mimetypes.instance.getMimetype(name.toLowerCase())
@@ -122,14 +122,14 @@ class Attachment implements Serializable, Validateable  {
     }
 
     def verify() {
-     //   if(this.isPersisted)
-     //       return
+        //   if(this.isPersisted)
+        //       return
         validate(validateable) //todo: optimize so that validation only called per request/update/validate/save
 
-        if(this.hasErrors()) {
+        if (this.hasErrors()) {
             this.errors?.allErrors?.each { FieldError err ->
                 this.parentEntity?.errors.reject(
-                        "${GrailsNameUtils.getPropertyName(this.parentEntity.class.simpleName)}.${this.propertyName}.${err.field}.invalid" , // 'user.password.doesnotmatch',
+                        "${GrailsNameUtils.getPropertyName(this.parentEntity.class.simpleName)}.${this.propertyName}.${err.field}.invalid", // 'user.password.doesnotmatch',
                         err.arguments,
                         err.defaultMessage)
             }
@@ -146,7 +146,7 @@ class Attachment implements Serializable, Validateable  {
     def toJson() {
         Map p = [:]
         serialProperties.each { name ->
-            if(this[name] != null)
+            if (this[name] != null)
                 p[name] = this[name]
         }
 
@@ -158,7 +158,7 @@ class Attachment implements Serializable, Validateable  {
         url(ORIGINAL_STYLE)
     }
 
-    def url(typeName=ORIGINAL_STYLE, expiration = null) {
+    def url(typeName = ORIGINAL_STYLE, expiration = null) {
         def storageOptions = getStorageOptions()
         def typeFileName = fileNameForType(typeName)
         def cloudFile = getCloudFile(typeName)
@@ -167,7 +167,7 @@ class Attachment implements Serializable, Validateable  {
         if (!storageOptions.url) {
             url = cloudFile.getURL(expiration)?.toString()
         } else {
-            url = joinPath(evaluatedPath((storageOptions.url ?: '/'), typeName),typeFileName)
+            url = joinPath(evaluatedPath((storageOptions.url ?: '/'), typeName), typeFileName)
         }
 
         url
@@ -194,16 +194,19 @@ class Attachment implements Serializable, Validateable  {
         cloudFile.inputStream
     }
 
-    void save() {
+    boolean save(Map params = [:])  {//} throws AttachmentException {
+        def options = [failOnError: false] << params
         def storageOptions = getStorageOptions()
         def bucket = storageOptions.bucket ?: '.'
         def path = storageOptions.path ?: ''
-        def providerOptions = storageOptions.providerOptions?.clone() ?: [:] //FIXME: If providerOptions required and not present, throw exception noting the issue
+        def providerOptions = storageOptions.providerOptions?.clone() ?: [:]
+        //FIXME: If providerOptions required and not present, throw exception noting the issue
         def provider = StorageProvider.create(providerOptions)
-        def providerPath = joinPath(evaluatedPath(path, ORIGINAL_STYLE),fileNameForType(ORIGINAL_STYLE))
-        def originalStyle  = this.options?.styles?."${ORIGINAL_STYLE}"
+        def providerPath = joinPath(evaluatedPath(path, ORIGINAL_STYLE), fileNameForType(ORIGINAL_STYLE))
+        def originalStyle = this.options?.styles?."${ORIGINAL_STYLE}"
         def mimeType = Mimetypes.instance.getMimetype(name?.toLowerCase())
         def isImage = mimeType.startsWith("image")
+        def success = false
         //TODO: DETERMINE IF SAVE SHOULD PERSIST
         // First lets upload the original
         if (fileStream && name) {
@@ -211,33 +214,51 @@ class Attachment implements Serializable, Validateable  {
             size = fileBytes.length
             assignAttributes()
 
-            if(isImage) {
-                if(!originalStyle)
+            if (isImage) {
+                if (!originalStyle) {
                     provider[bucket][providerPath] = fileBytes
-                runAttachmentProcessors()
+                    success = provider[bucket][providerPath].exists()
+                }
+                success = runAttachmentProcessors()
             } else {
                 provider[bucket][providerPath] = fileBytes
+                success = provider[bucket][providerPath].exists()
             }
+        } else if(this.isCopied) { //TODO: why is this called if  persisted?
+            success = true
+        } else if(this.isPersisted) {
+            success = true // NOTE: Should never be called, for debugging
         }
-        fileBytes = fileStream = null
-        persisted = true
+
+
+        if (success) {
+            fileBytes = fileStream = null
+            persisted = true
+        } else if (options.failOnError) {
+            fileBytes = null
+            throw new AttachmentException("Unable to save attachment named '${this.name}'" as String)
+        }
+
+        return success
     }
 
-    def saveProcessedStyle(typeName, byte[] bytes) {
+    boolean saveProcessedStyle(typeName, byte[] bytes) {
         def cloudFile = getCloudFile(typeName)
         def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
-
-        if([ORIGINAL_STYLE].contains(typeName)) {
+        def success = false
+        if ([ORIGINAL_STYLE].contains(typeName)) {
             size = bytes.length
             assignAttributes()
         }
 
-        if(mimeType) {
+        if (mimeType) {
             cloudFile.contentType = mimeType
         }
 
         cloudFile.bytes = bytes
-        cloudFile.save()
+        cloudFile.save() //thor exception if not exits
+        success = cloudFile.exists()
+        return success
     }
 
     void delete() {
@@ -247,6 +268,9 @@ class Attachment implements Serializable, Validateable  {
         def bucket = storageOptions.bucket ?: '.'
         //TODO: DETERMINE IF DELTE SHOULD PERSIST
 
+        if(this.isReadOnly)
+            throw new IllegalStateException("Attempted to delete readonly Attachment")
+
         for (type in styles) {
             def joinedPath = joinPath(evaluatedPath(path, type), fileNameForType(type))
             def cloudFile = provider[bucket][joinedPath]
@@ -254,6 +278,10 @@ class Attachment implements Serializable, Validateable  {
                 cloudFile.delete()
             }
         }
+    }
+
+    boolean exists() {
+        return this.getCloudFile().exists()
     }
 
     def getStyles() {
@@ -271,7 +299,7 @@ class Attachment implements Serializable, Validateable  {
         if (!typeName) {
             typeName = ORIGINAL_STYLE
         }
-        Map attachmentInfo = RemoraUtil.attachmentInfo(this.parentEntity,this,typeName)
+        Map attachmentInfo = RemoraUtil.attachmentInfo(this.parentEntity, this, typeName)
         def storageOptions = attachmentInfo.options
         def bucket = storageOptions.bucket ?: '.'
         def cloudPath = attachmentInfo.path
@@ -284,13 +312,13 @@ class Attachment implements Serializable, Validateable  {
         if (!typeName) {
             typeName = ORIGINAL_STYLE
         }
-        Map attachmentInfo = RemoraUtil.attachmentInfo(this.parentEntity,this,typeName)
+        Map attachmentInfo = RemoraUtil.attachmentInfo(this.parentEntity, this, typeName)
         def storageOptions = attachmentInfo.options
         attachmentInfo.prefix
     }
 
     Attachment getCopy() {
-        if(!this.isPersisted)
+        if (!this.isPersisted)
             throw new IllegalStateException("Attempting to copy an Attachment that is not persisted")
         return new Attachment(this)
     }
@@ -299,8 +327,8 @@ class Attachment implements Serializable, Validateable  {
         return persisted
     }
 
-    boolean  getIsReadOnly() {
-        return this.isPersisted
+    boolean getIsReadOnly() { //TODO: Add logic to determine what is readonly... otherwise, Atachment should be deleted
+        return this.isCopied
     }
 
     boolean getIsCopied() {
@@ -308,29 +336,32 @@ class Attachment implements Serializable, Validateable  {
     }
 
     protected def assignAttributes() {
-        if(this.isCopied)  //TODO: assign should be local to parent enity (or not supported by copies
+        if (this.isCopied)  //TODO: assign should be local to parent enity (or not supported by copies
             return
         this.options.assign?.each { k, v ->
             if (owner.hasProperty(k) && owner.parentEntity?.hasProperty(v)) {
-                def value =  owner[k]
+                def value = owner[k]
                 owner.parentEntity[v] = value
             }
         }
     }
 
-    protected String fileNameForType(typeName=ORIGINAL_STYLE) {
-        RemoraUtil.fileNameForType(this,style:typeName)
+    protected String fileNameForType(typeName = ORIGINAL_STYLE) {
+        RemoraUtil.fileNameForType(this, style: typeName)
     }
 
-    protected  String joinPath(String prefix, String suffix) {
-        RemoraUtil.joinPath(prefix,suffix)
+    protected String joinPath(String prefix, String suffix) {
+        RemoraUtil.joinPath(prefix, suffix)
     }
 
-    protected void runAttachmentProcessors() {
+    protected boolean runAttachmentProcessors() {
+        boolean success = true
         for (processorClass in processors) {
-            processorClass.newInstance(attachment: this).process()
+            if (success && !processorClass.newInstance(attachment: this).process())
+                success = false
         }
         // TODO: Grab Original File and Start Building out Thumbnails
+        return success
     }
 
     protected static def getConfig() {
@@ -338,11 +369,11 @@ class Attachment implements Serializable, Validateable  {
     }
 
     protected getStorageOptions() {
-        RemoraUtil.storageOptions(this.parentEntity,this)
+        RemoraUtil.storageOptions(this.parentEntity, this)
     }
 
     protected String evaluatedPath(String input, type = ORIGINAL_STYLE) {
-        RemoraUtil.evaluatePath(input,parentEntity,this,type)
+        RemoraUtil.evaluatePath(input, parentEntity, this, type)
     }
 
     protected Class getParentEntityClass() {

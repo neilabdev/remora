@@ -19,24 +19,26 @@ class ImageResizer {
 
     Attachment attachment
 
-    def process() {
+    boolean process() {
         def formatName = formatNameFromContentType(attachment.contentType) //TODO: if no contentType exists, this fails silently and return on #28
         def styleOptions = attachment.options?.styles
         def image = null
+        def success = true
 
         if (!formatName || !styleOptions) {
-            return
+            return success
         }
 
         styleOptions.each {styleName,styleValue->
-
             def style = [format: formatName] + (styleValue?.clone() ?: [:])
-            if(validStyle(attachment,styleName,style)) {
-
+            if(success && validStyle(attachment,styleName,style)) {
                 image = image ?: ImageIO.read( attachment.fileBytes ? new ByteArrayInputStream(attachment.fileBytes) : attachment.inputStream)
-                processStyle(styleName, style, image)
+                if(!processStyle(styleName, style, image)) { //todo: should finish processing if one image fails?
+                    success = false
+                }
             }
         }
+        return success
     }
 
     public static boolean validStyle(Attachment validateAttachment, String styleName, def style) {
@@ -74,6 +76,7 @@ class ImageResizer {
     }
 
     protected def processStyle(typeName, options, BufferedImage image) {
+        boolean success = false 
         try {
             def outputImage
 
@@ -118,10 +121,11 @@ class ImageResizer {
             def saveStream = new ByteArrayOutputStream()
 
             ImageIO.write(outputImage, options.format, saveStream)
-            attachment.saveProcessedStyle(typeName, saveStream.toByteArray())
+            success = attachment.saveProcessedStyle(typeName, saveStream.toByteArray())
         } catch (e) {
             log.error("Error Processing Uploaded File ${attachment.name} - ${typeName}", e)
         }
+        return success
     }
 
     def formatNameFromContentType(contentType) {
