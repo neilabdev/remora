@@ -86,7 +86,8 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
             def entity = event.entityObject
             def currentAttachment = event.entityObject."${attachmentProperty.name}"
             def persistedAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
-            def shouldBeDirty = !currentAttachment.is(persistedAttachment)
+            def isDirty = entity.isDirty(attachmentProperty.name)
+            def shouldBeDirty = !currentAttachment.is(persistedAttachment) || isDirty
 
             boolean dirty = false
 
