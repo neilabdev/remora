@@ -85,10 +85,10 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         for (attachmentProperty in attachmentFields) {
             def entity = event.entityObject
             def currentAttachment = event.entityObject."${attachmentProperty.name}"
-            def persistedAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
-            def isDirty = entity.isDirty(attachmentProperty.name)
+            def persistedAttachment = event.entityObject.getOriginalValue(attachmentProperty.name)
+            def isDirty = entity.hasChanged(attachmentProperty.name)
             def shouldBeDirty = !currentAttachment.is(persistedAttachment) || isDirty
-
+            //FIXME: isDirty bug: https://github.com/grails/grails-core/issues/10609
             boolean dirty = false
 
             if(shouldBeDirty && shouldBeDirty != entity.isDirty(attachmentProperty.name) ) { //TODO: Figure out why some isDirty not always true
