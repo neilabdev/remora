@@ -29,6 +29,8 @@ class Attachment implements Serializable, Validateable {
     String originalFilename
     String contentType
     Long size
+    Long width = 0
+    Long height = 0
     String parentPropertyName
     String propertyName // name of attachment Model.attachmentPropertyName
     String domainName //name of domain attached to
@@ -46,7 +48,7 @@ class Attachment implements Serializable, Validateable {
     protected boolean persisted = false
     //protected boolean copied = false
 
-    private static serialProperties = ['name', 'originalFilename', 'contentType', 'size',
+    private static serialProperties = ['name', 'originalFilename', 'contentType', 'size', 'width','height',
                                        'propertyName', 'domainName', 'domainClass', 'domainIdentity', 'domainCopied']
 
     static validateable = serialProperties
@@ -71,6 +73,8 @@ class Attachment implements Serializable, Validateable {
         domainCopied nullable: true
         domainIdentity nullable: true
         parentPropertyName nullable: true
+        width nullable: true
+        height nullable: true
     }
 
     def beforeValidate() {
@@ -242,12 +246,14 @@ class Attachment implements Serializable, Validateable {
         return success
     }
 
-    boolean saveProcessedStyle(typeName, byte[] bytes) {
+    protected boolean saveProcessedStyle(Map params=[:],typeName, byte[] bytes) {
         def cloudFile = getCloudFile(typeName)
         def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
         def success = false
         if ([ORIGINAL_STYLE].contains(typeName)) {
             size = bytes.length
+            width = params.width ?: 0
+            height = params.height ?: 0
             assignAttributes()
         }
 
@@ -281,7 +287,7 @@ class Attachment implements Serializable, Validateable {
     }
 
     boolean exists() {
-        return this.getCloudFile().exists()
+        return this.getCloudFile().exists() //org.apache.http.conn.ConnectTimeoutException: failed: connect timed out
     }
 
     def getStyles() {

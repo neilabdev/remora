@@ -85,18 +85,25 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         for (attachmentProperty in attachmentFields) {
             def entity = event.entityObject
             def currentAttachment = event.entityObject."${attachmentProperty.name}"
-            def persistedAttachment = event.entityObject.getOriginalValue(attachmentProperty.name)
-            def isDirty = entity.hasChanged(attachmentProperty.name)
-            def shouldBeDirty = !currentAttachment.is(persistedAttachment) || isDirty
-            //FIXME: isDirty bug: https://github.com/grails/grails-core/issues/10609
+         //   def persistedAttachment = event.entityObject.getOriginalValue(attachmentProperty.name)
+            def persistedAttachment = entity.getPersistentValue(attachmentProperty.name)
+            def isDirty = entity.isDirty(attachmentProperty.name)
+           // def hasChanged = entity.hasChanged(attachmentProperty.name)
+           // def shouldBeDirty = !currentAttachment.is(persistedAttachment) || isDirty
+            //FIXME: isDirty bug: v
             boolean dirty = false
 
-            if(shouldBeDirty && shouldBeDirty != entity.isDirty(attachmentProperty.name) ) { //TODO: Figure out why some isDirty not always true
-                log.warn("Attachment for entity '${entity.class.name}' id: '${entity.id}' property: '${attachmentProperty.name}' should be dirty")
-            }
+           // if(hasChanged != isDirty) {
+            //    log.debug("Attachment for entity '${entity.class.name}' id: '${entity.id}' property: '${attachmentProperty.name}' dirty mismatch")
+           // }
 
-            if(shouldBeDirty) {
+            if(isDirty) {
                 dirty = true
+
+                if(persistedAttachment && !(persistedAttachment instanceof Attachment)) {
+                    throw new AttachmentException("Attachment for entity '${entity.class.name}' id: '${entity.id}' property: '${attachmentProperty.name}' is not an attachment but a: ${persistedAttachment}")
+                }
+
                 if (persistedAttachment && !persistedAttachment.isReadOnly) {
                     applyPropertyOption(event.entityObject,attachmentProperty, attachment: persistedAttachment)?.delete()
                 }

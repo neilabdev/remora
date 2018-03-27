@@ -78,7 +78,7 @@ class ImageResizer {
     protected def processStyle(typeName, options, BufferedImage image) {
         boolean success = false 
         try {
-            def outputImage
+            BufferedImage outputImage
 
             if (options.mode == 'fit') {
 
@@ -121,7 +121,8 @@ class ImageResizer {
             def saveStream = new ByteArrayOutputStream()
 
             ImageIO.write(outputImage, options.format, saveStream)
-            success = attachment.saveProcessedStyle(typeName, saveStream.toByteArray())
+            success = attachment.saveProcessedStyle(typeName, saveStream.toByteArray(),
+                    width: outputImage.width,height: outputImage.height,style: typeName)
         } catch (e) {
             log.error("Error Processing Uploaded File ${attachment.name} - ${typeName}", e)
         }
