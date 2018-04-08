@@ -45,7 +45,6 @@ class Profile {
             storage: [
                 bucket:'default'
             ]
-
     ]
 
 

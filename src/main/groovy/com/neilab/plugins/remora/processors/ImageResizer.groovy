@@ -41,7 +41,7 @@ class ImageResizer {
         return success
     }
 
-    public static boolean validStyle(Attachment validateAttachment, String styleName, def style) {
+    static boolean validStyle(Attachment validateAttachment, String styleName, def style) {
         boolean success = true
         boolean has_width = style.width instanceof Integer && style.width > 1
         boolean has_height = style.height instanceof Integer && style.height > 1

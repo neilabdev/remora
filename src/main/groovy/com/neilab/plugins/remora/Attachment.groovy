@@ -199,7 +199,7 @@ class Attachment implements Serializable, Validateable {
     }
 
     boolean save(Map params = [:])  {//} throws AttachmentException {
-        def options = [failOnError: false] << params
+        def opts = [failOnError: false] << params
         def storageOptions = getStorageOptions()
         def bucket = storageOptions.bucket ?: '.'
         def path = storageOptions.path ?: ''
@@ -238,7 +238,7 @@ class Attachment implements Serializable, Validateable {
         if (success) {
             fileBytes = fileStream = null
             persisted = true
-        } else if (options.failOnError) {
+        } else if (opts.failOnError) {
             fileBytes = null
             throw new AttachmentException("Unable to save attachment named '${this.name}'" as String)
         }
@@ -267,7 +267,8 @@ class Attachment implements Serializable, Validateable {
         return success
     }
 
-    void delete() {
+    void delete(Map params=[:]) {
+        def opts = [:] << params
         def storageOptions = getStorageOptions()
         def path = storageOptions.path ?: ''
         def provider = StorageProvider.create(storageOptions.providerOptions.clone())
@@ -376,6 +377,20 @@ class Attachment implements Serializable, Validateable {
 
     protected getStorageOptions() {
         RemoraUtil.storageOptions(this.parentEntity, this)
+    }
+
+    protected Map getAttachmentOptions() {
+        String configClassName = this.isCopied ?
+                this.domainClass : this.parentEntity.getClass().name
+        def opts = Remora.registeredMapping(configClassName)
+        def fieldName = this.isCopied ? this.propertyName : this.parentPropertyName
+        return opts?."${fieldName}" ?: [:]
+    }
+
+    protected Map getParentAttachmentOptions() {
+        String configClassName = this.parentEntity.getClass().name
+        def opts = Remora.registeredMapping(configClassName)
+        return opts?."${this.parentPropertyName}" ?: [:]
     }
 
     protected String evaluatedPath(String input, type = ORIGINAL_STYLE) {

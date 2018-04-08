@@ -1,6 +1,7 @@
 package com.neilab.plugins.remora.util
 
 import com.neilab.plugins.remora.Attachment
+import com.neilab.plugins.remora.Remora
 import grails.util.GrailsClassUtils
 import grails.util.GrailsNameUtils
 import grails.util.Holders
@@ -139,6 +140,14 @@ class RemoraUtil {
         } else  {
             return type.getClass()
         }
+    }
+    
+    static Map getAttachmentOptions(Attachment attachment) {
+        String configClassName = attachment.isCopied ?
+                attachment.domainClass : attachment.parentEntity.getClass().name
+        def opts = Remora.registeredMapping(configClassName)
+        def fieldName = attachment.isCopied ? attachment.propertyName : attachment.parentPropertyName
+        return opts?."${fieldName}" ?: [:]
     }
 
     static boolean getIsMatchingTypes(def type1, def type2) {

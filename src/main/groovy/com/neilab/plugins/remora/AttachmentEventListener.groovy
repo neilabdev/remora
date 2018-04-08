@@ -70,7 +70,9 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
     void postDelete(final AbstractPersistenceEvent event, attachmentFields) {
         for (attachmentProperty in attachmentFields) {
             def attachment = applyPropertyOption(event.entityObject,attachmentProperty)
-            attachment?.delete()
+            if(!attachment?.isReadOnly) {
+                attachment?.delete()
+            }
         }
     }
 

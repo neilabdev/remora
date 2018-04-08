@@ -97,7 +97,6 @@ class LocalAttachmentSpec extends Specification {
                     file1: uploads[0].file.prefix,
                     file2: uploads[1].file.prefix,
                     file3: uploads[2].file.prefix
-
             ]
         then:
             uploads.size() == 3
