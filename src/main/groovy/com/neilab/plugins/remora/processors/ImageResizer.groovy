@@ -19,27 +19,29 @@ class ImageResizer {
 
     Attachment attachment
 
-    def process() {
+    boolean process() {
         def formatName = formatNameFromContentType(attachment.contentType) //TODO: if no contentType exists, this fails silently and return on #28
         def styleOptions = attachment.options?.styles
         def image = null
+        def success = true
 
         if (!formatName || !styleOptions) {
-            return
+            return success
         }
 
         styleOptions.each {styleName,styleValue->
-
             def style = [format: formatName] + (styleValue?.clone() ?: [:])
-            if(validStyle(attachment,styleName,style)) {
-
+            if(success && validStyle(attachment,styleName,style)) {
                 image = image ?: ImageIO.read( attachment.fileBytes ? new ByteArrayInputStream(attachment.fileBytes) : attachment.inputStream)
-                processStyle(styleName, style, image)
+                if(!processStyle(styleName, style, image)) { //todo: should finish processing if one image fails?
+                    success = false
+                }
             }
         }
+        return success
     }
 
-    public static boolean validStyle(Attachment validateAttachment, String styleName, def style) {
+    static boolean validStyle(Attachment validateAttachment, String styleName, def style) {
         boolean success = true
         boolean has_width = style.width instanceof Integer && style.width > 1
         boolean has_height = style.height instanceof Integer && style.height > 1
@@ -74,8 +76,9 @@ class ImageResizer {
     }
 
     protected def processStyle(typeName, options, BufferedImage image) {
+        boolean success = false 
         try {
-            def outputImage
+            BufferedImage outputImage
 
             if (options.mode == 'fit') {
 
@@ -90,7 +93,7 @@ class ImageResizer {
                 def should_crop = options.width && options.height
 
                 if(should_crop) {
-                    outputImage = Scalr.resize(image, Scalr.Method.AUTOMATIC, mode, options_width, options_height, Scalr.OP_ANTIALIAS)
+                    outputImage = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, mode, options_width, options_height, Scalr.OP_ANTIALIAS)
                 } else if(options.width) {
                     outputImage = Scalr.resize(image,Scalr.Mode.FIT_TO_WIDTH,options_width,Scalr.OP_ANTIALIAS)
                     //only width supplie
@@ -112,16 +115,18 @@ class ImageResizer {
             } else if (options.mode == 'crop') {
                 outputImage = Scalr.crop(outputImage, options.x ?: 0, options.y ?: 0, options.width, options.height, Scalr.OP_ANTIALIAS)
             } else if (options.mode == 'scale') {
-                outputImage = Scalr.resize(image, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, options.width, options.height, Scalr.OP_ANTIALIAS)
+                outputImage = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.AUTOMATIC, options.width, options.height, Scalr.OP_ANTIALIAS)
             }
 
             def saveStream = new ByteArrayOutputStream()
 
             ImageIO.write(outputImage, options.format, saveStream)
-            attachment.saveProcessedStyle(typeName, saveStream.toByteArray())
+            success = attachment.saveProcessedStyle(typeName, saveStream.toByteArray(),
+                    width: outputImage.width,height: outputImage.height,style: typeName)
         } catch (e) {
             log.error("Error Processing Uploaded File ${attachment.name} - ${typeName}", e)
         }
+        return success
     }
 
     def formatNameFromContentType(contentType) {

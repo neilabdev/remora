@@ -3,6 +3,7 @@ package com.neilab.plugins.remora
 import com.neilab.plugins.remora.Attachment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
+import groovy.util.logging.Log4j
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEventListener
@@ -12,6 +13,7 @@ import org.springframework.context.ApplicationEvent
 /**
  * Created by ghost on 7/24/15.
  */
+@Log4j
 class AttachmentEventListener extends AbstractPersistenceEventListener {
 
     private static String OPTIONS_KEY = "remora"
@@ -28,45 +30,29 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
             def entityObject = event.entityObject
             switch (event.eventType) {
                 case EventType.SaveOrUpdate:
-                    //println "EventType.SaveOrUpdate: ${event.entityObject?.class} ${event.entityObject?.id}"
                     validateAttachment(event, attachmentFields)
                     break
                 case EventType.Validation:
-                    //println "EventType.Validation: ${event.entityObject?.class} ${event.entityObject?.id}"
                     validateAttachment(event, attachmentFields)
                     break
                 case EventType.PreInsert:
-                    // println "PRE INSERT ${event.entityObject}"
                     break
                 case EventType.PostInsert:
-                    // println "POST INSERT ${event.entityObject}"
-                    //println "EventType.PostInsert: ${event.entityObject?.class} ${event.entityObject?.id}"
                     saveAttachment(event, attachmentFields)
                     break
                 case EventType.PreUpdate:
-                    // println "PRE UPDATE ${event.entityObject}"
-                    //println "EventType.PreUpdate: ${event.entityObject?.class} ${event.entityObject?.id}"
-                    saveAttachment(event, attachmentFields)
+                    saveAttachment(event, attachmentFields,true)
                     break
                 case EventType.PostUpdate:
-                    // println "POST UPDATE ${event.entityObject}"
-                    //println "EventType.PostUpdate: ${event.entityObject?.class} ${event.entityObject?.id}"
                     break
                 case EventType.PreDelete:
-                    // println "PRE DELETE ${event.entityObject}"
-                  //  postDelete(event, attachmentFields)
                     break
                 case EventType.PostDelete:
-                    //println "EventType.PostDelete: ${event.entityObject?.class} ${event.entityObject?.id}"
                     postDelete(event, attachmentFields)
-                    // println "POST DELETE ${event.entityObject}"
                     break
                 case EventType.PreLoad:
-                    // println "PRE LOAD ${event.entityObject}"
                     break
                 case EventType.PostLoad:
-                    // println "POST LOAD ${event.entityObject}"
-                    //println "EventType.PostLoad: ${event.entityObject?.class} ${event.entityObject?.id}"
                     postLoad(event, attachmentFields)
                     break
             }
@@ -78,42 +64,44 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
     }
 
     void postLoad(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
+        applyPropertyOptions(event.entityObject, attachmentFields)
     }
 
     void postDelete(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
         for (attachmentProperty in attachmentFields) {
-            def attachment = event.entityObject."${attachmentProperty.name}"
-            attachment?.delete()
+            def attachment = applyPropertyOption(event.entityObject,attachmentProperty)
+            if(!attachment?.isReadOnly) {
+                attachment?.delete()
+            }
         }
     }
 
     void validateAttachment(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
         for (attachmentProperty in attachmentFields) {
-            def attachment = event.entityObject."${attachmentProperty.name}" as Attachment
+            def attachment = applyPropertyOption(event.entityObject,attachmentProperty) as Attachment
             attachment?.verify()
         }
     }
 
-    void saveAttachment(final AbstractPersistenceEvent event, attachmentFields) {
-        applyPropertyOptions(event, attachmentFields)
+    void saveAttachment(final AbstractPersistenceEvent event, attachmentFields, boolean update = false) {
         for (attachmentProperty in attachmentFields) {
-            def attachment = event.entityObject."${attachmentProperty.name}"
-            if (event.entityObject.isDirty(attachmentProperty.name)) {
-                def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
-                def attachmentOptions = entityOptions?."${attachmentProperty.name}"
-                def originalAttachment = event.entityObject.getPersistentValue(attachmentProperty.name)
-                if (originalAttachment) {
-                    originalAttachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
-                    originalAttachment.propertyName = attachmentProperty.name
-                    originalAttachment.options = attachmentOptions ?: [:]
-                    originalAttachment.parentEntity = event.entityObject
-                    originalAttachment.delete()
+            def entity = event.entityObject
+            def persistedAttachment = entity.getPersistentValue(attachmentProperty.name)
+            def isDirty = entity.isDirty(attachmentProperty.name)
+
+            if(isDirty) {
+                if(persistedAttachment && !(persistedAttachment instanceof Attachment)) {
+                    throw new AttachmentException("Attachment for entity '${entity.class.name}' id: '${entity.id}' property: '${attachmentProperty.name}' is not an attachment but a: ${persistedAttachment}")
+                }
+
+                if (persistedAttachment && !persistedAttachment.isReadOnly) {
+                    applyPropertyOption(event.entityObject,attachmentProperty, attachment: persistedAttachment)?.delete()
                 }
             }
-            attachment?.save()
+
+            if(!update || isDirty) { //save if 'new' or 'updating'
+                applyPropertyOption(event.entityObject,attachmentProperty) ?.save(failOnError: true) //TODO: failOnError configurable?
+            }
         }
     }
 
@@ -121,18 +109,29 @@ class AttachmentEventListener extends AbstractPersistenceEventListener {
         event?.entityObject ? Remora.registeredProperties(event.entityObject.class) : null
     }
 
-    static protected applyPropertyOptions(event, attachmentFields) {
-        for (attachmentProperty in attachmentFields) {
-            def entityOptions = Remora.registeredMapping(event.entityObject.getClass())
-            def attachmentOptions = entityOptions?."${attachmentProperty.name}"
-            def attachment = event.entityObject."${attachmentProperty.name}"
-            if (attachment) {
-                attachment.domainName = GrailsNameUtils.getPropertyName(event.entityObject.getClass())
+    static protected Attachment applyPropertyOption(Map params=[:],entityObject,attachmentProperty) {
+        def attachment = (params.containsKey("attachment") ? params["attachment"] :
+                entityObject."${attachmentProperty.name}" ) as Attachment
+
+        //if(Remora.isCascadingEntity(object: entityObject, field: attachmentProperty.name )) { }
+
+        if (attachment) {
+            attachment.parentEntity = entityObject
+            attachment.parentPropertyName = attachmentProperty.name
+            if(!attachment?.isCopied) {
+                attachment.domainName = GrailsNameUtils.getPropertyName(entityObject.getClass()) //if masquerading, this will be parent
+                attachment.domainClass = entityObject.getClass().name
+                attachment.domainIdentity = entityObject.ident() //if masquerading, this will be parent
                 attachment.propertyName = attachmentProperty.name
-                attachment.options = attachmentOptions ?: [:]
-                attachment.parentEntity = event.entityObject
             }
         }
+
+        return attachment
     }
 
+    static protected applyPropertyOptions(entityObject, attachmentFields) {
+        for (attachmentProperty in attachmentFields) {
+            applyPropertyOption(entityObject,attachmentProperty)
+        }
+    }
 }

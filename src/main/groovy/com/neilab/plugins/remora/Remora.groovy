@@ -26,7 +26,7 @@ class Remora {
             result
         }
     }
-    public static void registerDomain(GrailsDomainClass domainClass) {
+    static void registerDomain(GrailsDomainClass domainClass) {
         Class clazz = domainClass.clazz
 
         def merge_map_dsl = { Class domainParam ->
@@ -53,25 +53,57 @@ class Remora {
 
         Map remora_mapping =  merge_map_dsl.call(domainClass.clazz)
 
-        registeredMapping[clazz] = remora_mapping
-        registeredProperties[clazz] = domainClass.properties.findAll { it.type == Attachment } ?: null
-        registeredDomains[clazz] =  true
+        registeredMapping[clazz.name] = remora_mapping
+        registeredProperties[clazz.name] = domainClass.properties.findAll { it.type == Attachment } ?: null
+        registeredDomains[clazz.name] =  true
     }
 
-    public static boolean registeredClass(Class clazz) {
-        registeredDomains.containsKey(clazz)
+    static boolean registeredClass(Class clazz) {
+       return registeredClass(clazz.name)
     }
 
-    public static List<GrailsDomainClassProperty> registeredProperties(Class clazz) {
-        registeredProperties[clazz]
+    static List<GrailsDomainClassProperty> registeredProperties(Class clazz) {
+        return registeredProperties(clazz.name)
     }
 
-    public static Map registeredMapping(Class clazz) {
-        registeredMapping[clazz]
+    static Map registeredMapping(Class clazz) {
+        return registeredMapping(clazz.name)
     }
 
-    public static def config(Class clazz) {
-        registeredDomains[clazz]
+    static def config(Class clazz) {
+        return config(clazz.name)
+    }
+
+    static boolean registeredClass(String clazzName) {
+        registeredDomains.containsKey(clazzName)
+    }
+
+    static List<GrailsDomainClassProperty> registeredProperties(String clazzName) {
+        registeredProperties[clazzName]
+    }
+
+    static Map registeredMapping(String clazzName) {
+        registeredMapping[clazzName]
+    }
+
+    static def config(String clazzName) {
+        registeredDomains[clazzName]
+    }
+
+
+    static boolean isCascadingEntity(def params=[:]) {
+        def options = [
+                object:null,
+                field: null
+        ] << params
+
+        def object = options.object // domainClass
+        def field = options.field // Object.fieldName
+
+
+
+        return true
+
     }
 
 
