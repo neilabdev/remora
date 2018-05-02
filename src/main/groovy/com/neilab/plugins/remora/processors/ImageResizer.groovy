@@ -93,7 +93,7 @@ class ImageResizer {
                 def should_crop = options.width && options.height
 
                 if(should_crop) {
-                    outputImage = Scalr.resize(image, Scalr.Method.AUTOMATIC, mode, options_width, options_height, Scalr.OP_ANTIALIAS)
+                    outputImage = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, mode, options_width, options_height, Scalr.OP_ANTIALIAS)
                 } else if(options.width) {
                     outputImage = Scalr.resize(image,Scalr.Mode.FIT_TO_WIDTH,options_width,Scalr.OP_ANTIALIAS)
                     //only width supplie
@@ -115,7 +115,7 @@ class ImageResizer {
             } else if (options.mode == 'crop') {
                 outputImage = Scalr.crop(outputImage, options.x ?: 0, options.y ?: 0, options.width, options.height, Scalr.OP_ANTIALIAS)
             } else if (options.mode == 'scale') {
-                outputImage = Scalr.resize(image, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, options.width, options.height, Scalr.OP_ANTIALIAS)
+                outputImage = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.AUTOMATIC, options.width, options.height, Scalr.OP_ANTIALIAS)
             }
 
             def saveStream = new ByteArrayOutputStream()

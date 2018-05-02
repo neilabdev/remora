@@ -22,8 +22,7 @@ class Attachment implements Serializable, Validateable {
         NONE,
         READONLY
     }
-
-
+    
     private String ORIGINAL_STYLE = RemoraUtil.ORIGINAL_STYLE
     String name
     String originalFilename
@@ -37,16 +36,12 @@ class Attachment implements Serializable, Validateable {
     String domainClass
     Boolean domainCopied
     def domainIdentity
-
-    def options = [:]
-    def overrides = [:]
     def parentEntity
     def processors = [ImageResizer]
 
     InputStream fileStream
     byte[] fileBytes
     protected boolean persisted = false
-    //protected boolean copied = false
 
     private static serialProperties = ['name', 'originalFilename', 'contentType', 'size', 'width','height',
                                        'propertyName', 'domainName', 'domainClass', 'domainIdentity', 'domainCopied']
@@ -61,8 +56,8 @@ class Attachment implements Serializable, Validateable {
         domainName nullable: false
         domainClass nullable: true, validator: { val, Attachment obj ->
             if (obj.isCopied && obj.parentPropertyName) { //TODO: Refactor to helper methods.. make cleaner
-                def registerdMapping = Remora.registeredMapping(obj.parentEntityClass)
-                def requiredClass = registerdMapping?."${obj.parentPropertyName}"?.as
+                def registeredMapping = Remora.registeredMapping(obj.parentEntityClass)
+                def requiredClass = registeredMapping?."${obj.parentPropertyName}"?.as
                 if (requiredClass) {
                     return RemoraUtil.getIsMatchingTypes(requiredClass, obj.domainClass)
                 }
@@ -87,13 +82,11 @@ class Attachment implements Serializable, Validateable {
             this[name] = copy[name]
         }
         this.persisted = copy.isPersisted
-        this.options = copy.options
-        this.overrides = copy.overrides
+        // this.options = copy.options
         this.domainCopied = true
     }
 
-    Attachment(String jsonText) { //set readonly
-        // attachmentProperties = jsonText ? new JsonSlurper().parseText(jsonText) : [:]
+    Attachment(String jsonText) {
         if (jsonText)
             fromJson(jsonText)
     }
@@ -163,7 +156,7 @@ class Attachment implements Serializable, Validateable {
     }
 
     def url(typeName = ORIGINAL_STYLE, expiration = null) {
-        def storageOptions = getStorageOptions()
+        def storageOptions = getAttachmentStorageOptions()
         def typeFileName = fileNameForType(typeName)
         def cloudFile = getCloudFile(typeName)
         def url
@@ -177,16 +170,24 @@ class Attachment implements Serializable, Validateable {
         url
     }
 
+    private Map cachedOptions = null
     Map getOptions() {
-        def evaluatedOptions = overrides ? overrides.clone() + options?.clone() : options?.clone()
+        if(cachedOptions)
+            return  cachedOptions
+
+        def evaluatedOptions = [:] + attachmentOptions
+
         if (evaluatedOptions?.styles && evaluatedOptions?.styles instanceof Closure) {
-            evalutedOptions.styles = evaluatedOptions.styles.call(attachment)
+            evaluatedOptions.styles = evaluatedOptions.styles.call(this)
         }
+
         evaluatedOptions?.styles?.each { style ->
             if (style.value instanceof Closure) {
-                style.value = style.value.call(attachment)
+                style.value = style.value.call(this)
             }
         }
+
+        cachedOptions = evaluatedOptions
         return evaluatedOptions
     }
 
@@ -200,7 +201,7 @@ class Attachment implements Serializable, Validateable {
 
     boolean save(Map params = [:])  {//} throws AttachmentException {
         def opts = [failOnError: false] << params
-        def storageOptions = getStorageOptions()
+        def storageOptions = getAttachmentStorageOptions()
         def bucket = storageOptions.bucket ?: '.'
         def path = storageOptions.path ?: ''
         def providerOptions = storageOptions.providerOptions?.clone() ?: [:]
@@ -269,7 +270,7 @@ class Attachment implements Serializable, Validateable {
 
     void delete(Map params=[:]) {
         def opts = [:] << params
-        def storageOptions = getStorageOptions()
+        def storageOptions = getAttachmentStorageOptions()
         def path = storageOptions.path ?: ''
         def provider = StorageProvider.create(storageOptions.providerOptions.clone())
         def bucket = storageOptions.bucket ?: '.'
@@ -375,8 +376,8 @@ class Attachment implements Serializable, Validateable {
         Holders.config?.remora
     }
 
-    protected getStorageOptions() {
-        RemoraUtil.storageOptions(this.parentEntity, this)
+    protected getAttachmentStorageOptions() {
+        return RemoraUtil.storageOptions(this.parentEntity, this)
     }
 
     protected Map getAttachmentOptions() {
@@ -387,7 +388,7 @@ class Attachment implements Serializable, Validateable {
         return opts?."${fieldName}" ?: [:]
     }
 
-    protected Map getParentAttachmentOptions() {
+    protected Map getAttachmentParentOptions() {
         String configClassName = this.parentEntity.getClass().name
         def opts = Remora.registeredMapping(configClassName)
         return opts?."${this.parentPropertyName}" ?: [:]
