@@ -2,7 +2,12 @@ package com.neilab.plugins.remora.processors
 import com.neilab.plugins.remora.Attachment
 import org.imgscalr.Scalr
 import groovy.util.logging.Log4j
+
+import javax.imageio.IIOImage
 import javax.imageio.ImageIO
+import javax.imageio.ImageWriteParam
+import javax.imageio.ImageWriter
+import javax.imageio.stream.FileImageOutputStream
 import java.awt.image.BufferedImage
 
 /**
@@ -120,9 +125,33 @@ class ImageResizer {
 
             def saveStream = new ByteArrayOutputStream()
 
-            ImageIO.write(outputImage, options.format, saveStream)
-            success = attachment.saveProcessedStyle(typeName, saveStream.toByteArray(),
-                    width: outputImage.width,height: outputImage.height,style: typeName)
+            if(["jpeg"].contains(options.format)) {
+                File tempFile = File.createTempFile("remora-", "-${options.format}") //TODO: Add config for temp ath
+
+                try {
+                    ImageWriter jpgWriter = ImageIO.getImageWritersByFormatName("jpg").next()
+                    ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam()
+                    jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
+                    jpgWriteParam.setCompressionQuality(1.0f)
+                    jpgWriter.setOutput(new FileImageOutputStream(tempFile))
+                    IIOImage savedOutputImage = new IIOImage(outputImage, null, null)
+                    jpgWriter.write(null, savedOutputImage, jpgWriteParam)
+                    jpgWriter.dispose()
+
+                    success = attachment.saveProcessedStyle(typeName, tempFile,
+                            width: outputImage.width,height: outputImage.height,style: typeName)
+                } catch(Exception e) {
+                    throw e
+                } finally {
+                    if(!tempFile.delete()) //should never return false
+                        tempFile.deleteOnExit()
+                }
+            } else {
+                ImageIO.write(outputImage, options.format, saveStream)
+                success = attachment.saveProcessedStyle(typeName, saveStream.toByteArray(),
+                        width: outputImage.width,height: outputImage.height,style: typeName)
+            }
+
         } catch (e) {
             log.error("Error Processing Uploaded File ${attachment.name} - ${typeName}", e)
         }
