@@ -247,61 +247,15 @@ class Attachment implements Serializable, Validateable {
         return success
     }
 
-    protected boolean saveProcessedStyle(Map params=[:],typeName, byte[] bytes) {
-        def cloudFile = getCloudFile(typeName)
-        def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
-        def success = false
-        if ([ORIGINAL_STYLE].contains(typeName)) {
-            size = bytes.length
-            width = params.width ?: 0
-            height = params.height ?: 0
-            assignAttributes()
-        }
-
-        if (mimeType) {
-            cloudFile.contentType = mimeType
-        }
-
-        cloudFile.bytes = bytes
-        cloudFile.save() //thor exception if not exits
-        success = cloudFile.exists()
-        return success
-    }
-
-
-    protected boolean saveProcessedStyle(Map params=[:],typeName, InputStream fileStream) {
-        def cloudFile = getCloudFile(typeName)
-        def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
-        def success = false
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileStream)
-        cloudFile.inputStream = fileStream
-        cloudFile.save() //thor exception if not exits
-        success = cloudFile.exists()
-
-        if ([ORIGINAL_STYLE].contains(typeName)) {
-            size = bufferedInputStream.available()
-            width = params.width ?: 0
-            height = params.height ?: 0
-            assignAttributes()
-        }
-
-        if (mimeType) {
-            cloudFile.contentType = mimeType
-        }
-
-
-        return success
-    }
-
-
     protected boolean saveProcessedStyle(Map params=[:],typeName, File file) {
         def cloudFile = getCloudFile(typeName)
         def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
         def success = false
+        long fileSize = file.size()
 
 
         if ([ORIGINAL_STYLE].contains(typeName)) {
-            size =  params.size ?: file.size()
+            size =  params.size ?: fileSize
             width = params.width ?: 0
             height = params.height ?: 0
             assignAttributes()
@@ -311,12 +265,10 @@ class Attachment implements Serializable, Validateable {
             cloudFile.contentType = mimeType
         }
 
-  //      BufferedInputStream bufferedInputStream = new BufferedInputStream(file.newDataInputStream())
-        cloudFile.bytes = file.bytes
-    //    cloudFile.inputStream = file.newDataInputStream()
+        cloudFile.setContentLength(fileSize)
+        cloudFile.inputStream = new BufferedInputStream(file.newDataInputStream())
         cloudFile.save() //thor exception if not exits
         success = cloudFile.exists()
-
         return success
     }
 
