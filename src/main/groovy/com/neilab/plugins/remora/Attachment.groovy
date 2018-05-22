@@ -13,6 +13,62 @@ import org.springframework.validation.FieldError
 import org.springframework.web.multipart.MultipartFile
 import grails.validation.Validateable
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+class AttachmentFile {
+    File file
+    MultipartFile multipartFile
+    File tempFile
+    String fileName
+    String contentType
+
+    AttachmentFile(InputStream stream, String fileName, String contentType = null) {
+        this.tempFile = File.createTempFile("remora-", "-attatchmentFile")
+        Files.copy(stream,tempFile.toPath(),StandardCopyOption.REPLACE_EXISTING)
+        tempFile.deleteOnExit()
+        this.file = this.tempFile
+        this.fileName = fileName
+        this.contentType = contentType
+    }
+
+    AttachmentFile(File file) {
+        this.file  = file
+    }
+
+    AttachmentFile(MultipartFile file) {
+        this.multipartFile = file
+    }
+
+    InputStream getInputStream() {
+        return this.file?.newDataInputStream() ?: this.multipartFile?.inputStream
+    }
+
+    Long getSize() {
+        return this.file?.size() ?: this.multipartFile?.size 
+    }
+
+    String getName() {
+        return this.fileName ?: this.file?.name ?: this.multipartFile?.originalFilename
+    }
+
+    String getContentType() {
+        return this.contentType ?:
+                (this.file ?  Mimetypes.instance.getMimetype(file.name.toLowerCase()) : this.multipartFile.contentType)
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize()
+        this.tempFile?.delete()
+    }
+
+    void close() {
+        this.tempFile?.delete()
+        this.tempFile = null
+    }
+}
+
 class Attachment implements Serializable, Validateable {
 
     static enum CascadeType {
@@ -38,10 +94,9 @@ class Attachment implements Serializable, Validateable {
     def domainIdentity
     def parentEntity
     def processors = [ImageResizer]
-
-    InputStream fileStream
-    byte[] fileBytes
+    private AttachmentFile attachmentFile
     protected boolean persisted = false
+
 
     private static serialProperties = ['name', 'originalFilename', 'contentType', 'size', 'width','height',
                                        'propertyName', 'domainName', 'domainClass', 'domainIdentity', 'domainCopied']
@@ -95,26 +150,26 @@ class Attachment implements Serializable, Validateable {
         map?.each { k, v -> this[k] = v }
     }
 
-    Attachment(Map map = [:], MultipartFile file) {
-        contentType = file.contentType
-        name = originalFilename = file.originalFilename
-        size = file.size
-        fileStream = file.inputStream
-        map?.each { k, v -> this[k] = v }
-    }
-
+    @Deprecated
     Attachment(InputStream stream, fileName, mimeType = null) {
-        size = stream.available()
-        fileStream = stream
+        this.attachmentFile = new AttachmentFile(stream,mimeType)
         name = originalFilename = fileName
         contentType = mimeType ?: Mimetypes.instance.getMimetype(name.toLowerCase())
     }
 
+    Attachment(Map map = [:], MultipartFile file) {
+        attachmentFile = new AttachmentFile(file)
+        contentType = file.contentType
+        name = originalFilename = file.originalFilename
+        size = file.size
+        map?.each { k, v -> this[k] = v }
+    }
+
     Attachment(Map map = [:], File file) {
+        attachmentFile = new AttachmentFile(file)
         originalFilename = name = file.name
         size = file.size()
         contentType = Mimetypes.instance.getMimetype(name.toLowerCase())
-        fileStream = file.newInputStream()
         map?.each { k, v -> this[k] = v }
     }
 
@@ -149,7 +204,6 @@ class Attachment implements Serializable, Validateable {
 
         JsonOutput.toJson(p)
     }
-
 
     def getUrl() {
         url(ORIGINAL_STYLE)
@@ -191,12 +245,12 @@ class Attachment implements Serializable, Validateable {
         return evaluatedOptions
     }
 
-    void setInputStream(is) {
-        fileStream = is
+    AttachmentFile getSourceFile() {
+        this.attachmentFile
     }
 
-    def getInputStream() {
-        cloudFile.inputStream
+    InputStream getInputStream() {
+        this.isPersisted ? cloudFile.inputStream : this.attachmentFile?.inputStream
     }
 
     boolean save(Map params = [:])  {//} throws AttachmentException {
@@ -212,21 +266,28 @@ class Attachment implements Serializable, Validateable {
         def mimeType = Mimetypes.instance.getMimetype(name?.toLowerCase())
         def isImage = mimeType.startsWith("image")
         def success = false
-        //TODO: DETERMINE IF SAVE SHOULD PERSIST
-        // First lets upload the original
-        if (fileStream && name) {
-            fileBytes = fileStream.bytes
-            size = fileBytes.length
+
+        if (attachmentFile) {
+            size = attachmentFile.size
             assignAttributes()
 
             if (isImage) {
                 if (!originalStyle) {
-                    provider[bucket][providerPath] = fileBytes
-                    success = provider[bucket][providerPath].exists()
+                    CloudFile providerCouldFile = provider[bucket][providerPath]
+                    providerCouldFile.setContentLength(attachmentFile.size)
+                    providerCouldFile.setInputStream(attachmentFile.inputStream)
+                    providerCouldFile.save()
+                    if(provider[bucket][providerPath].exists()) {
+                        success = runAttachmentProcessors()
+                    }
+                } else {
+                    success = runAttachmentProcessors()
                 }
-                success = runAttachmentProcessors()
             } else {
-                provider[bucket][providerPath] = fileBytes
+                CloudFile providerCouldFile = provider[bucket][providerPath]
+                providerCouldFile.setContentLength(attachmentFile.size)
+                providerCouldFile.setInputStream(attachmentFile.inputStream)
+                providerCouldFile.save()
                 success = provider[bucket][providerPath].exists()
             }
         } else if(this.isCopied) { //TODO: why is this called if  persisted?
@@ -235,12 +296,11 @@ class Attachment implements Serializable, Validateable {
             success = true // NOTE: Should never be called, for debugging
         }
 
-
         if (success) {
-            fileBytes = fileStream = null
             persisted = true
+            this.attachmentFile?.close()
+            this.attachmentFile = null
         } else if (opts.failOnError) {
-            fileBytes = null
             throw new AttachmentException("Unable to save attachment named '${this.name}'" as String)
         }
 
@@ -266,7 +326,7 @@ class Attachment implements Serializable, Validateable {
         }
 
         cloudFile.setContentLength(fileSize)
-        cloudFile.inputStream = new BufferedInputStream(file.newDataInputStream())
+        cloudFile.inputStream = new BufferedInputStream(file.newInputStream())
         cloudFile.save() //thor exception if not exits
         success = cloudFile.exists()
         return success

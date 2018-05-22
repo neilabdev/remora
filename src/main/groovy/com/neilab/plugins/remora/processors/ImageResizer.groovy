@@ -39,7 +39,7 @@ class ImageResizer {
         styleOptions.each { styleName, styleValue ->
             def style = [format: formatName] + (styleValue?.clone() ?: [:])
             if (success && validStyle(attachment, styleName, style)) {
-                image = image ?: ImageIO.read(attachment.fileBytes ? new ByteArrayInputStream(attachment.fileBytes) : attachment.inputStream)
+                image = image ?: ImageIO.read(attachment.inputStream)
                 if (!processStyle(styleName, style, image)) { //todo: should finish processing if one image fails?
                     success = false
                 }
