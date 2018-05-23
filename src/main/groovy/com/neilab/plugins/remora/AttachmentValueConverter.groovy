@@ -20,8 +20,13 @@ class AttachmentValueConverter  implements ValueConverter {
             if (!value.originalFilename) {
                 return null
             }
-         return new Attachment(contentType: value.contentType,name: value.name, originalFilename: value.originalFilename,
-                    size: value.size, inputStream: value.inputStream)
+         return new Attachment((value as MultipartFile))
+        } else if(value instanceof File) {
+            if (!value.name) {
+                return null
+            }
+
+            return new Attachment((value as File))
         } else if (value instanceof String) {
             return new Attachment(value as String)
         } else if (value instanceof InputStream) {

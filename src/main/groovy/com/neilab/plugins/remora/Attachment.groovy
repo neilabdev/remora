@@ -159,9 +159,15 @@ class Attachment implements Serializable, Validateable {
 
     Attachment(Map map = [:], MultipartFile file) {
         attachmentFile = new AttachmentFile(file)
-        contentType = file.contentType
         name = originalFilename = file.originalFilename
         size = file.size
+
+        if([Mimetypes.MIMETYPE_OCTET_STREAM].contains(file.contentType)) {
+            contentType = Mimetypes.instance.getMimetype(name)
+        } else {
+            contentType = file.contentType
+        }
+
         map?.each { k, v -> this[k] = v }
     }
 
@@ -244,10 +250,10 @@ class Attachment implements Serializable, Validateable {
         cachedOptions = evaluatedOptions
         return evaluatedOptions
     }
-
-    AttachmentFile getSourceFile() {
-        this.attachmentFile
-    }
+/*
+    void setInputStream(InputStream stream) {
+        return
+    } */
 
     InputStream getInputStream() {
         this.isPersisted ? cloudFile.inputStream : this.attachmentFile?.inputStream
