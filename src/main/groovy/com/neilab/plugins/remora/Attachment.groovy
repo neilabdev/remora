@@ -211,11 +211,11 @@ class Attachment implements Serializable, Validateable {
         JsonOutput.toJson(p)
     }
 
-    def getUrl() {
+    String getUrl() {
         url(ORIGINAL_STYLE)
     }
 
-    def url(typeName = ORIGINAL_STYLE, expiration = null) {
+    String url(typeName = ORIGINAL_STYLE, expiration = null) {
         def storageOptions = getAttachmentStorageOptions()
         def typeFileName = fileNameForType(typeName)
         def cloudFile = getCloudFile(typeName)
@@ -374,7 +374,11 @@ class Attachment implements Serializable, Validateable {
         name = name ?: originalFilename
     }
 
-    CloudFile getCloudFile(typeName = ORIGINAL_STYLE) {
+    CloudFile getFile(typeName = ORIGINAL_STYLE) {
+        return getCloudFile(typeName)
+    }
+
+    protected CloudFile getCloudFile(typeName = ORIGINAL_STYLE) {
         if (!typeName) {
             typeName = ORIGINAL_STYLE
         }
