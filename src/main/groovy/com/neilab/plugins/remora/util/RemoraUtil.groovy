@@ -76,7 +76,7 @@ class RemoraUtil {
         Class clazz = getEntityClass(hostEntity,attachment)
         def parentIdentity = getEntityIdentity(hostEntity,attachment)// ?: attachment.domainIdentity
         String propertyName = attachment.propertyName
-        String style = styleName ?: 'original' // change 'original' to originalStyle .. this should never be null
+        String style = styleName ?: ORIGINAL_STYLE // change 'original' to originalStyle .. this should never be null
         path?.replace(":class", "${GrailsNameUtils.getShortName(clazz)}").
                 replace(":domainName", "${GrailsNameUtils.getPropertyName(clazz.simpleName)}").
                 replace(":id", "${parentIdentity}").

@@ -230,6 +230,25 @@ class Attachment implements Serializable, Validateable {
         url
     }
 
+    String getPath() {
+        path(ORIGINAL_STYLE)
+    }
+
+    String path(typeName = ORIGINAL_STYLE) {
+        if (!typeName) {
+            typeName = ORIGINAL_STYLE
+        }
+        Map attachmentInfo = RemoraUtil.attachmentInfo(this.parentEntity, this, typeName)
+        def cloudPath = attachmentInfo.path
+        def storageOptions = attachmentInfo.options
+        // def bucket = storageOptions.bucket ?: '.'
+        // def providerOptions = storageOptions.providerOptions.clone()
+        // def provider = StorageProvider.create(providerOptions)
+
+        return cloudPath
+    }
+
+
     private Map cachedOptions = null
     Map getOptions() {
         if(cachedOptions)
@@ -250,10 +269,6 @@ class Attachment implements Serializable, Validateable {
         cachedOptions = evaluatedOptions
         return evaluatedOptions
     }
-/*
-    void setInputStream(InputStream stream) {
-        return
-    } */
 
     InputStream getInputStream() {
         this.isPersisted ? cloudFile.inputStream : this.attachmentFile?.inputStream
@@ -374,8 +389,12 @@ class Attachment implements Serializable, Validateable {
         name = name ?: originalFilename
     }
 
-    CloudFile getFile(typeName = ORIGINAL_STYLE) {
+    CloudFile getResource(typeName = ORIGINAL_STYLE) {
         return getCloudFile(typeName)
+    }
+
+    CloudFile resource(typeName= ORIGINAL_STYLE) {
+        return getResource(typeName)
     }
 
     protected CloudFile getCloudFile(typeName = ORIGINAL_STYLE) {
