@@ -1,6 +1,5 @@
 package com.neilab.plugins.remora
 
-import com.neilab.plugins.remora.Attachment
 import grails.databinding.converters.ValueConverter
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.commons.CommonsMultipartFile

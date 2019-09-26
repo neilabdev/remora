@@ -1,7 +1,9 @@
 package com.neilab.plugins.remora.test
 import com.bertramlabs.plugins.karman.*
 import com.bertramlabs.plugins.karman.local.*
-import grails.test.mixin.integration.Integration
+import grails.testing.mixin.integration.Integration
+
+//import grails.test.mixin.integration.Integration
 import grails.transaction.Rollback
 import spock.lang.Specification
 
