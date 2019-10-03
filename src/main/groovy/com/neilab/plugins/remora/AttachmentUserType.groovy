@@ -30,22 +30,22 @@ class AttachmentUserType implements UserType {
 
     @Override
     Object assemble(Serializable cached, Object owner) throws HibernateException {
-        return cached;
+        return cached
     }
 
     @Override
     Serializable disassemble(Object value) throws HibernateException {
-        return (Serializable) value;
+        return (Serializable) value
     }
 
     @Override
     boolean equals(Object x, Object y) throws HibernateException {
-        return x == null ? y == null : x.equals(y);
+        return x == null ? y == null : x.equals(y)
     }
 
     @Override
     int hashCode(Object value) throws HibernateException {
-        return value == null ? 0 : value.hashCode();
+        return value == null ? 0 : value.hashCode()
     }
 
     Object nullSafeGet(ResultSet rs, String[] names, SessionImplementor session, Object owner) throws HibernateException, SQLException {
@@ -65,7 +65,7 @@ class AttachmentUserType implements UserType {
     }
 
     Object nullSafeGet(ResultSet rs, String[] names, Object o) throws HibernateException, SQLException {
-        def result = rs.getString(names[0]);
+        def result = rs.getString(names[0])
         return result ? new Attachment(result) : null
     }
 

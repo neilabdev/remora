@@ -52,7 +52,6 @@ dependencies {
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-plugin-testing"
 
-   // runtime "com.h2database:h2"
     runtime "org.apache.tomcat:tomcat-jdbc" //FIXME: Tomcat/web shoudl not be necesary. But needed or table not created. https://stackoverflow.com/questions/45573674/grails-3-3-0-org-h2-jdbc-jdbcsqlexception-table-xyz-not-found-in-unit-tests
   /*
  */
