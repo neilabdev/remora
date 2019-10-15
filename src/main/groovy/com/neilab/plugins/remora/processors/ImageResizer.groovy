@@ -29,8 +29,8 @@ class ImageResizer {
     boolean process() {
         def formatName = formatNameFromContentType(attachment.contentType)
         //TODO: if no contentType exists, this fails silently and return on #28
-        def styleOptions = (attachment.options?.styles  ?: [:] ) as Map<String,Map>
-        def defaultOptions = (attachment.options  ?: [:] ).findAll{ ['filter','mode'].contains(it.key)}
+        def styleOptions = (attachment.options?.styles ?: [:]) as Map<String, Map>
+        def defaultOptions = (attachment.options ?: [:]).findAll { ['filter', 'mode','quality'].contains(it.key) }
         BufferedImage image = null
         def success = true
 
@@ -38,11 +38,12 @@ class ImageResizer {
             return success
         }
 
-        styleOptions.each {  String styleName, styleValue ->
+        styleOptions.each { String styleName, styleValue ->
             Map style = [format: formatName] + (styleValue?.clone() ?: [:])
             if (success && validStyle(attachment, styleName, style)) {
                 image = image ?: ImageIO.read(attachment.inputStream)
-                if (!processStyle(styleName, style,defaultOptions, image)) { //todo: should finish processing if one image fails?
+                if (!processStyle(styleName, style, defaultOptions, image)) {
+                    //todo: should finish processing if one image fails?
                     success = false
                 }
             }
@@ -84,22 +85,40 @@ class ImageResizer {
         return success
     }
 
-    protected def processStyle(typeName, Map options, Map default_options=[:], BufferedImage image) {
+    private static List ensureArray(def obj) {
+        List list = !obj || obj instanceof List ? obj : [obj]
+        return list ?: []
+    }
+
+    protected def processStyle(typeName, Map options, Map default_options = [:], BufferedImage image) {
         boolean success = false
         String format = options.format as String
         File tempFile = File.createTempFile("remora-", "-${format}") //TODO: Add config for temp ath
         int options_width = (options.width ?: image.width) as Integer
         int options_height = (options.height ?: image.height) as Integer
-        BufferedImageOp[] opts = (options.filter ?: default_options.filter ?: [Scalr.OP_ANTIALIAS]).collect { o ->
+
+        BufferedImageOp[] opts = (ensureArray(options.filter ?: default_options.filter) ?: [Scalr.OP_ANTIALIAS]).collect { o ->
             o instanceof String ?
                     [
                             'antialias': Scalr.OP_ANTIALIAS,
                             'brighter' : Scalr.OP_BRIGHTER,
                             'darker'   : Scalr.OP_DARKER,
                             'grayscale': Scalr.OP_GRAYSCALE,
-                            'none': null
+                            'none'     : null
                     ].get((String) o.toLowerCase()) : o
         }.find { o -> o instanceof BufferedImageOp } as BufferedImageOp[]
+
+        def option_quality = options.quality ?: default_options.quality ?: 'auto'
+        Scalr.Method quality = (option_quality instanceof Scalr.Method) ? options.quality as Scalr.Method  :
+                [
+                        'ultra_high': Scalr.Method.ULTRA_QUALITY,
+                        'maximum'      : Scalr.Method.ULTRA_QUALITY,
+                        'high'   : Scalr.Method.QUALITY,
+                        'quality'   : Scalr.Method.QUALITY,
+                        'speed'     : Scalr.Method.SPEED,
+                        'balanced'  : Scalr.Method.BALANCED,
+                        'auto'      : Scalr.Method.AUTOMATIC
+                ].get(options.quality ?: default_options.quality ?: 'auto') as Scalr.Method ?: Scalr.Method.ULTRA_QUALITY
 
         String options_mode = options.mode ?: default_options.mode
 
@@ -118,7 +137,7 @@ class ImageResizer {
 
 
                 if (should_crop) {
-                    outputImage = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, mode, options_width, options_height, opts)
+                    outputImage = Scalr.resize(image, quality, mode, options_width, options_height, opts)
                 } else if (options.width) {
                     outputImage = Scalr.resize(image, Scalr.Mode.FIT_TO_WIDTH, options_width, opts)
                     //only width supplie
@@ -140,7 +159,7 @@ class ImageResizer {
             } else if (options_mode == 'crop') {
                 outputImage = Scalr.crop(outputImage, (options.x ?: 0) as Integer, (options.y ?: 0) as Integer, options_width, options_height, Scalr.OP_ANTIALIAS)
             } else if (options_mode == 'scale') {
-                outputImage = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.AUTOMATIC,
+                outputImage = Scalr.resize(image, quality, Scalr.Mode.AUTOMATIC,
                         options_width, options_height, opts)
             } else {
                 outputImage = image
