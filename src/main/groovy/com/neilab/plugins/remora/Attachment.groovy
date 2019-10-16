@@ -328,7 +328,7 @@ class Attachment implements Serializable, Validateable {
         return success
     }
 
-    protected boolean saveProcessedStyle(Map params=[:],typeName, File file) {
+     boolean saveProcessedStyle(Map params=[:], String typeName, File file) {
         def cloudFile = getCloudFile(typeName)
         def mimeType = Mimetypes.instance.getMimetype(cloudFile.name.toLowerCase())
         def success = false

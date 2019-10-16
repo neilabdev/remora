@@ -1,9 +1,9 @@
 package com.neilab.plugins.remora.processors
 
 import com.neilab.plugins.remora.Attachment
+import groovy.transform.CompileStatic
 import org.imgscalr.Scalr
 import groovy.util.logging.Log4j
-
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
@@ -18,6 +18,7 @@ import java.awt.image.BufferedImageOp
 
 
 @Log4j
+//@CompileStatic
 class ImageResizer {
 
     private static final Map<String, String> CONTENT_TYPE_TO_NAME = [
@@ -38,8 +39,9 @@ class ImageResizer {
             return success
         }
 
-        styleOptions.each { String styleName, styleValue ->
-            Map style = [format: formatName] + (styleValue?.clone() ?: [:])
+        styleOptions.each { String styleName, def styleValue ->
+             Map value  = styleValue instanceof Map ? (Map)styleValue : [:]
+            Map style = [format: formatName] + value
             if (success && validStyle(attachment, styleName, style)) {
                 image = image ?: ImageIO.read(attachment.inputStream)
                 if (!processStyle(styleName, style, defaultOptions, image)) {
@@ -51,13 +53,17 @@ class ImageResizer {
         return success
     }
 
-    static boolean validStyle(Attachment validateAttachment, String styleName, def style) {
+    static boolean validStyle(Attachment validateAttachment, String styleName, Map style) {
         boolean success = true
-        boolean has_width = style.width instanceof Integer && style.width > 1
-        boolean has_height = style.height instanceof Integer && style.height > 1
+        Integer style_width =  style.width instanceof Integer ? (Integer) style.width as Integer : null
+        Integer style_height =  style.height instanceof Integer ? (Integer) style.height as Integer : null
+
+        boolean has_width = style_width != null && style_width > 1
+        boolean has_height = style_height != null && style_height > 1
         boolean enable_fit = ['fit'].contains(style.mode)
 
-        if (!['fit', 'crop', 'scale'].contains(style.mode)) {
+
+        if (style.mode && !['fit', 'crop', 'scale'].contains(style.mode)) {
             log.error("Style :${styleName} for property :${validateAttachment.propertyName} on model :${validateAttachment.domainName} requires a :mode with values ['fit','crop','scale'] but received '${style.mode}' ")
             success = false
         }
@@ -68,12 +74,12 @@ class ImageResizer {
                 success = false
             }
         } else {
-            if (!style.width instanceof Integer || style.width < 1) {
+            if (!style_width || style_width < 1) {
                 log.error("Style :${styleName} for property :${validateAttachment.propertyName} on model :${validateAttachment.domainName} requires a :width that is a integer and is > 0 but received '${style.width}' ")
                 success = false
             }
 
-            if (!style.height instanceof Integer || style.height < 1) {
+            if (!style_height || style_height < 1) {
                 log.error("Style :${styleName} for property :${validateAttachment.propertyName} on model :${validateAttachment.domainName} requires a :height that is a integer and is > 0 but received '${style.height}' ")
                 success = false
             }
@@ -86,11 +92,11 @@ class ImageResizer {
     }
 
     private static List ensureArray(def obj) {
-        List list = !obj || obj instanceof List ? obj : [obj]
+        List list = (!obj || obj instanceof List) ? obj as List  : [obj]
         return list ?: []
     }
 
-    protected def processStyle(typeName, Map options, Map default_options = [:], BufferedImage image) {
+    protected def processStyle(String typeName, Map options, Map default_options = [:], BufferedImage image) {
         boolean success = false
         String format = options.format as String
         File tempFile = File.createTempFile("remora-", "-${format}") //TODO: Add config for temp ath
@@ -118,7 +124,7 @@ class ImageResizer {
                         'speed'     : Scalr.Method.SPEED,
                         'balanced'  : Scalr.Method.BALANCED,
                         'auto'      : Scalr.Method.AUTOMATIC
-                ].get(options.quality ?: default_options.quality ?: 'auto') as Scalr.Method ?: Scalr.Method.ULTRA_QUALITY
+                ].get(option_quality) as Scalr.Method ?: Scalr.Method.AUTOMATIC
 
         String options_mode = options.mode ?: default_options.mode
 
@@ -131,14 +137,15 @@ class ImageResizer {
                 if (image.width < image.height) {
                     mode = Scalr.Mode.FIT_TO_WIDTH
                 }
-                def xOffset = 0
-                def yOffset = 0
+                Integer xOffset = 0 as Integer
+                Integer yOffset = 0 as Integer
                 def should_crop = options.width && options.height
 
 
                 if (should_crop) {
                     outputImage = Scalr.resize(image, quality, mode, options_width, options_height, opts)
                 } else if (options.width) {
+                    log.info("Resizing image to fit :width while applying filters: ${opts?.length ?: 0}")
                     outputImage = Scalr.resize(image, Scalr.Mode.FIT_TO_WIDTH, options_width, opts)
                     //only width supplie
                 } else if (options.height) {
@@ -147,11 +154,11 @@ class ImageResizer {
                 }
 
                 if (!options.x) {
-                    xOffset = Math.floor((outputImage.width - options_width) / 2).toInteger()
+                     xOffset = Math.floor(((outputImage.width - options_width) / 2).toDouble()).toInteger()
                 }
 
                 if (!options.y) {
-                    yOffset = Math.floor((outputImage.height - options_height) / 2).toInteger()
+                    yOffset = Math.floor(((outputImage.height - options_height) / 2).toDouble()).toInteger()
                 }
 
                 if (should_crop)
@@ -194,8 +201,8 @@ class ImageResizer {
         return success
     }
 
-    def formatNameFromContentType(contentType) {
-        CONTENT_TYPE_TO_NAME[contentType]
+    static String formatNameFromContentType(String contentType) {
+        return CONTENT_TYPE_TO_NAME[contentType]
     }
 
 }
