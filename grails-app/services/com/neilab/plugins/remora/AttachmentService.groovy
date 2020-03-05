@@ -2,16 +2,17 @@ package com.neilab.plugins.remora
 
 import com.bertramlabs.plugins.karman.*
 import com.neilab.plugins.remora.util.RemoraUtil
-import grails.core.GrailsDomainClassProperty
-import grails.transaction.NotTransactional
-import grails.transaction.Transactional
+//import grails.core.GrailsDomainClassProperty
+import grails.gorm.transactions.*
 import grails.util.Holders
+import org.grails.datastore.mapping.model.PersistentProperty
 
 
 @Transactional
 class AttachmentService {
 
     def grailsApplication
+    def grailsDomainClassMappingContext
 
     @NotTransactional
     Map attachmentInfo(def hostEntitiy, String paramName,String style=RemoraUtil.ORIGINAL_STYLE) {
@@ -21,6 +22,7 @@ class AttachmentService {
     StorageProvider getStorageProvider(Map params=[:]) {
         def options=[model:null] << params
         def model = options.model
+
 
         if(model &&  Remora.registeredClass(model.class)) {
 
@@ -72,7 +74,8 @@ class AttachmentService {
         def attachments = Remora.registeredProperties(hostEntity.getClass())//domainClass.properties.findAll { it.type == Attachment } ?: []
         def info = [:]
 
-        attachments.each { GrailsDomainClassProperty property ->
+
+        attachments.each { PersistentProperty property ->
             def name = property.name
             info[name] = attachmentInfo(hostEntity,name,null)
         }

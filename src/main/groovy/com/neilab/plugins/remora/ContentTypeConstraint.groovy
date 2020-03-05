@@ -1,8 +1,9 @@
 package com.neilab.plugins.remora
 import com.neilab.plugins.remora.*
 import com.neilab.plugins.remora.Attachment
+import org.grails.datastore.gorm.validation.constraints.AbstractConstraint
 import org.springframework.validation.Errors
-import grails.validation.AbstractConstraint
+//import grails.validation.AbstractConstraint
 /**
  * Created by ghost on 7/27/15.
  */
