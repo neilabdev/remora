@@ -5,6 +5,7 @@ import com.neilab.plugins.remora.AttachmentService
 //import grails.test.mixin.integration.Integration
 import com.bertramlabs.plugins.karman.StorageProvider
 import com.neilab.plugins.remora.test.Profile
+import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 
 //import org.springframework.com.neilab.plugins.remora.test.annotation.Rollback

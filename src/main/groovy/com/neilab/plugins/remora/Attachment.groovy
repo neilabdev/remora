@@ -7,11 +7,11 @@ import com.neilab.plugins.remora.processors.ImageResizer
 import com.neilab.plugins.remora.util.RemoraUtil
 import grails.util.GrailsNameUtils
 import grails.util.Holders
+import grails.validation.Validateable
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.springframework.validation.FieldError
 import org.springframework.web.multipart.MultipartFile
-import grails.validation.Validateable
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption

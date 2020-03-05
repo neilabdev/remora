@@ -2,8 +2,9 @@ package com.neilab.plugins.remora.processors
 
 import com.neilab.plugins.remora.Attachment
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.imgscalr.Scalr
-import groovy.util.logging.Log4j
+//import groovy.util.logging.Log4j
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
@@ -17,7 +18,7 @@ import java.awt.image.BufferedImageOp
  */
 
 
-@Log4j
+@Slf4j
 //@CompileStatic
 class ImageResizer {
 

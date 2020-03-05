@@ -53,6 +53,8 @@ Remora is a Grails Image / File Upload Plugin initially based on the Selfie plug
 
     void doWithDynamicMethods() {
         // TODO Implement registering dynamic methods to classes (optional)
+
+
         ConstrainedProperty.registerNewConstraint('contentType', ContentTypeConstraint)
         ConstrainedProperty.registerNewConstraint('fileSize', FileSizeConstraint)
         for ( domainClass in grailsApplication.domainClasses) {
@@ -75,7 +77,8 @@ Remora is a Grails Image / File Upload Plugin initially based on the Selfie plug
 
 
     void doWithApplicationContext() {
-        HibernateDatastore datastore = applicationContext.getBean(HibernateDatastore.class)
+        //HibernateDatastore datastore = applicationContext.getBean(HibernateDatastore.class)
+        def datastore = applicationContext.getBean("hibernateDatastore")
 
         applicationContext.addApplicationListener new AttachmentEventListener(datastore)
         //  grailsApplication.mainContext.eventTriggeringInterceptor?.datastores?.each { k, datastore ->

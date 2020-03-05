@@ -2,6 +2,7 @@ package com.neilab.plugins.remora
 
 import com.neilab.plugins.remora.Attachment
 import org.grails.datastore.gorm.validation.constraints.AbstractConstraint
+import org.springframework.context.MessageSource
 
 //import grails.validation.AbstractConstraint
 import org.springframework.validation.Errors
@@ -10,6 +11,15 @@ import org.springframework.validation.Errors
  * Created by ghost on 7/27/15.
  */
 class FileSizeConstraint extends AbstractConstraint {
+
+    FileSizeConstraint(Class<?> constraintOwningClass, String constraintPropertyName, Object constraintParameter, MessageSource messageSource) {
+        super(constraintOwningClass, constraintPropertyName, constraintParameter, messageSource)  //TODO: not sure what this is for? Grails 4.0
+    }
+
+    @Override
+    protected Object validateParameter(Object constraintParameter) {
+        return null
+    }
 
     boolean supports(Class classObject) {
         classObject == Attachment
@@ -38,4 +48,6 @@ class FileSizeConstraint extends AbstractConstraint {
 
     protected boolean skipBlankValues() { true }
     protected boolean skipNullValues() { true }
+
+
 }

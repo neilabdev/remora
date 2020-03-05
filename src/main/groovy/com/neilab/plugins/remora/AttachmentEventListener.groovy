@@ -3,7 +3,9 @@ package com.neilab.plugins.remora
 import com.neilab.plugins.remora.Attachment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
-import groovy.util.logging.Log4j
+import groovy.util.logging.Slf4j
+
+//import groovy.util.logging.Log4j
 import org.grails.datastore.mapping.core.Datastore
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEvent
 import org.grails.datastore.mapping.engine.event.AbstractPersistenceEventListener
@@ -13,7 +15,7 @@ import org.springframework.context.ApplicationEvent
 /**
  * Created by ghost on 7/24/15.
  */
-@Log4j
+@Slf4j
 class AttachmentEventListener extends AbstractPersistenceEventListener {
 
     private static String OPTIONS_KEY = "remora"

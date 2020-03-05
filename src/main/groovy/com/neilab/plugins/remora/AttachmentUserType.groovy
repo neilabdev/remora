@@ -8,6 +8,7 @@ import org.hibernate.HibernateException
 //import org.hibernate.engine.spi.SessionImplementor
 
 import org.hibernate.engine.spi.SessionImplementor
+import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.usertype.UserType
 
 import java.sql.PreparedStatement
@@ -50,6 +51,8 @@ class AttachmentUserType implements UserType {
         return value == null ? 0 : value.hashCode()
     }
 
+
+
     Object nullSafeGet(ResultSet rs, String[] names, SessionImplementor session, Object owner) throws HibernateException, SQLException {
         def result = rs.getString(names[0])
         return result ? new Attachment(result) : null
@@ -83,6 +86,24 @@ class AttachmentUserType implements UserType {
         }
     }
 
+    @Override //new method
+    Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws HibernateException, SQLException {
+        def result = rs.getString(names[0])
+        return result ? new Attachment(result) : null
+    }
+
+    @Override //new method
+    void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session) throws HibernateException, SQLException {
+        if (value instanceof Attachment) {
+            Attachment attachment = value
+            st.setString(index, attachment.toJson() as String)
+        } else if (value instanceof String) {
+            st.setString(index, value.toString() as String)
+        } else {
+            st.setNull(index, Types.LONGVARCHAR)
+        }
+    }
+
     @Override
     Object deepCopy(Object o) throws HibernateException {
         return o
@@ -98,4 +119,8 @@ class AttachmentUserType implements UserType {
     Object replace(Object o, Object o1, Object o2) throws HibernateException {
         return null
     }
+
+    // new methods
+
+
 }
