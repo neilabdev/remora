@@ -11,7 +11,7 @@ import org.springframework.validation.Errors
 class ContentTypeConstraint extends AbstractConstraint {
 
     ContentTypeConstraint(Class<?> constraintOwningClass, String constraintPropertyName, Object constraintParameter, MessageSource messageSource) {
-        super(constraintOwningClass, constraintPropertyName, constraintParameter, messageSource) //TODO: not sure what this is for? Grails 4.0
+        super(constraintOwningClass, constraintPropertyName, constraintParameter, messageSource)
     }
 
     boolean supports(Class classObject) {
@@ -33,9 +33,9 @@ class ContentTypeConstraint extends AbstractConstraint {
 
     protected boolean	skipBlankValues() { true }
 
-    @Override  //TODO: not sure what this is for? Grails 4.0
+    @Override
     protected Object validateParameter(Object constraintParameter) {
-        return null
+        return constraintParameter
     }
 
     protected boolean	skipNullValues() { true }

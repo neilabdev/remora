@@ -49,6 +49,8 @@ class ImageResizer {
                     //todo: should finish processing if one image fails?
                     success = false
                 }
+            } else {
+                return false
             }
         }
         return success
@@ -62,14 +64,12 @@ class ImageResizer {
         boolean has_width = style_width != null && style_width > 1
         boolean has_height = style_height != null && style_height > 1
         boolean enable_fit = ['fit'].contains(style.mode)
+      //  boolean default_mode = style.mode ?: 'scale'
 
-
-        if (style.mode && !['fit', 'crop', 'scale'].contains(style.mode)) {
+        if (!style.mode || !['fit', 'crop', 'scale'].contains(style.mode)) {
             log.error("Style :${styleName} for property :${validateAttachment.propertyName} on model :${validateAttachment.domainName} requires a :mode with values ['fit','crop','scale'] but received '${style.mode}' ")
             success = false
-        }
-
-        if (enable_fit) {
+        } else if (enable_fit) {
             if (!has_width && !has_height) {
                 log.error("Style :${styleName} for property :${validateAttachment.propertyName} on model :${validateAttachment.domainName} requires that :width or :height is a integer and is > 0 but received w: '${style.width}' h: '${style.height}' ")
                 success = false

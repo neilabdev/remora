@@ -93,7 +93,7 @@ dependencies {
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
-
+    runtime "org.apache.tomcat:tomcat-jdbc"
 
     compile "org.grails:grails-plugin-validation"
   //  compile 'com.bertramlabs.plugins:karman-grails:1.1.5'

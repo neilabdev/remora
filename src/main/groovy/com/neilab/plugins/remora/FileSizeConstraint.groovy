@@ -18,7 +18,7 @@ class FileSizeConstraint extends AbstractConstraint {
 
     @Override
     protected Object validateParameter(Object constraintParameter) {
-        return null
+        return constraintParameter
     }
 
     boolean supports(Class classObject) {

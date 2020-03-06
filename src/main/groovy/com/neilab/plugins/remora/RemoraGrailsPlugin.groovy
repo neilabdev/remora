@@ -1,7 +1,7 @@
 package com.neilab.plugins.remora
 
-import grails.gorm.validation.ConstrainedProperty
 import grails.plugins.*
+import org.grails.datastore.gorm.validation.constraints.registry.ConstraintRegistry
 import org.grails.datastore.mapping.model.PersistentEntity
 import org.grails.orm.hibernate.HibernateDatastore
 
@@ -53,10 +53,11 @@ Remora is a Grails Image / File Upload Plugin initially based on the Selfie plug
 
     void doWithDynamicMethods() {
         // TODO Implement registering dynamic methods to classes (optional)
+        ConstraintRegistry gormValidatorRegistry = grailsApplication.mainContext.getBean("gormValidatorRegistry")
 
+        gormValidatorRegistry.addConstraint(ContentTypeConstraint)
+        gormValidatorRegistry.addConstraint(FileSizeConstraint)
 
-        ConstrainedProperty.registerNewConstraint('contentType', ContentTypeConstraint)
-        ConstrainedProperty.registerNewConstraint('fileSize', FileSizeConstraint)
         for ( domainClass in grailsApplication.domainClasses) {
             PersistentEntity entity = grailsApplication.mappingContext.getPersistentEntity(domainClass.clazz.name)
             registerRemoraDomain(entity)

@@ -27,6 +27,7 @@ class Remora {
             result
         }
     }
+
     static void registerDomain(PersistentEntity persistentEntity) {
         Class clazz = persistentEntity.javaClass
 
