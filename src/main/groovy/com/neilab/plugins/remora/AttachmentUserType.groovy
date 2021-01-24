@@ -8,7 +8,6 @@ import org.hibernate.HibernateException
 //import org.hibernate.engine.spi.SessionImplementor
 
 import org.hibernate.engine.spi.SessionImplementor
-import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.usertype.UserType
 
 import java.sql.PreparedStatement
@@ -85,15 +84,15 @@ class AttachmentUserType implements UserType {
             st.setNull(index, Types.LONGVARCHAR)
         }
     }
-
+/* Grails 4.0
     @Override //new method
-    Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws HibernateException, SQLException {
+    Object nullSafeGet(ResultSet rs, String[] names, org.hibernate.engine.spi.SharedSessionContractImplementor session, Object owner) throws HibernateException, SQLException {
         def result = rs.getString(names[0])
         return result ? new Attachment(result) : null
     }
 
     @Override //new method
-    void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session) throws HibernateException, SQLException {
+    void nullSafeSet(PreparedStatement st, Object value, int index, org.hibernate.engine.spi.SharedSessionContractImplementor session) throws HibernateException, SQLException {
         if (value instanceof Attachment) {
             Attachment attachment = value
             st.setString(index, attachment.toJson() as String)
@@ -102,7 +101,7 @@ class AttachmentUserType implements UserType {
         } else {
             st.setNull(index, Types.LONGVARCHAR)
         }
-    }
+    } */
 
     @Override
     Object deepCopy(Object o) throws HibernateException {

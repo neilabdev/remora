@@ -9,7 +9,7 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "org.grails.plugins:hibernate5:7.0.0"
+        classpath "org.grails.plugins:hibernate5:7.0.4"
       //  classpath "gradle.plugin.com.github.erdi.webdriver-binaries:webdriver-binaries-gradle-plugin:2.0"
        // classpath "com.bertramlabs.plugins:asset-pipeline-gradle:3.0.10"
 
@@ -54,20 +54,8 @@ dependencyManagement {
 } */
 
 dependencies {
-   /* developmentOnly("org.springframework.boot:spring-boot-devtools")
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.grails:grails-core"
-    compile "org.grails:grails-plugin-databinding"
-    compile "org.grails:grails-plugin-i18n"
-    compile "org.grails:grails-plugin-services"
-    compile "org.grails:grails-logging"
-    compileOnly "io.micronaut:micronaut-inject-groovy"
-    console "org.grails:grails-console"
-    profile "org.grails.profiles:plugin"
-    testCompile "org.grails:grails-gorm-testing-support"
-    testCompile "org.mockito:mockito-core" */
 
+/*
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
@@ -98,9 +86,42 @@ dependencies {
     compile "org.grails:grails-plugin-validation"
   //  compile 'com.bertramlabs.plugins:karman-grails:1.1.5'
     compile "org.grails.plugins:hibernate5"
-    compile "org.hibernate:hibernate-core:5.4.0.Final"
+    compile "org.hibernate:hibernate-core:5.4.0.Final" */
+    compile "org.springframework.boot:spring-boot-starter-logging"
+    compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile "org.grails:grails-core"
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile "org.springframework.boot:spring-boot-starter-tomcat"
+    compile "org.grails:grails-web-boot"
+    compile "org.grails:grails-logging"
+    compile "org.grails:grails-plugin-rest"
+    compile "org.grails:grails-plugin-databinding"
+    compile "org.grails:grails-plugin-i18n"
+    compile "org.grails:grails-plugin-services"
+    compile "org.grails:grails-plugin-url-mappings"
+    compile "org.grails:grails-plugin-interceptors"
+    compile "org.grails.plugins:cache"
+    compile "org.grails.plugins:async"
+    compile "org.grails.plugins:scaffolding"
+    compile "org.grails.plugins:events"
+    compile "org.grails.plugins:hibernate5"
+    compile "org.hibernate:hibernate-core:5.1.16.Final"
+    compile "org.grails.plugins:gsp"
+    console "org.grails:grails-console"
+    profile "org.grails.profiles:web"
+    runtime "org.glassfish.web:el-impl:2.1.2-b03"
+    runtime "com.h2database:h2"
+    runtime "org.apache.tomcat:tomcat-jdbc"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.15.1"
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.grails.plugins:geb"
+    testCompile "org.grails:grails-web-testing-support"
+    testCompile "org.grails.plugins:geb:1.1.2"
+    testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
+    testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver:2.47.1"
 
-     compile 'com.bertramlabs.plugins:karman-core:0.9.21'
+    compile 'com.bertramlabs.plugins:karman-core:0.9.21'
     compile 'com.bertramlabs.plugins:karman-grails:1.3.0' // grails 4
     compile group: 'org.imgscalr', name: 'imgscalr-lib', version: '4.2'
     compile group: 'commons-fileupload', name: 'commons-fileupload', version: '1.3.3'
@@ -112,12 +133,14 @@ bootRun {
             '-noverify',
             '-XX:TieredStopAtLevel=1',
             '-Xmx1024m')
-    sourceResources sourceSets.main
+   // sourceResources sourceSets.main
+    addResources = true
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
     //   jvmArgs = ['-Dspring.output.ansi.enabled=always']
 }
-bootJar.enabled = false
+//bootJar.enabled = false //grails 4
+bootRepackage.enabled = false
 grailsPublish {
    // githubSlug = 'foo/bar'
   //  userOrg = 'NEiLAB, LLC'
