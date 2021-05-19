@@ -3,7 +3,6 @@ package com.neilab.plugins.remora
 import grails.plugins.*
 import org.grails.datastore.gorm.validation.constraints.registry.ConstraintRegistry
 import org.grails.datastore.mapping.model.PersistentEntity
-import org.grails.orm.hibernate.HibernateDatastore
 
 //import org.grails.orm.hibernate.HibernateDatastore
 
@@ -11,12 +10,13 @@ import org.grails.orm.hibernate.HibernateDatastore
 class RemoraGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
-    def grailsVersion = "3.1.0 > *"
+    def grailsVersion = "3.1.5 > *"
     // resources that are excluded from plugin packaging
     def pluginExcludes = [
         "grails-app/views/error.gsp",
         "**/com/neilab/plugins/remora/test/**"
     ]
+    List loadAfter = ['hibernate3', 'hibernate4', 'hibernate5']
 
     // TODO Fill in these fields
     def title = "Remora" // Headline display name of the plugin
