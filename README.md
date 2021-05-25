@@ -18,7 +18,38 @@ Add The Following to your `build.gradle`:
 
 ```groovy
 dependencies {
-    compile ':remora:1.0.1'
+    compile ':remora:1.0.2'
+}
+```
+
+Optionally Add default mappings to `application.groovy`:
+
+```groovy
+import com.neilab.plugins.remora.Attachment
+import com.neilab.plugins.remora.AttachmentUserType
+
+grails.gorm.default.mapping = {
+    "user-type" type: AttachmentUserType, class: Attachment
+}
+```
+
+Without which you must specify the type in your domain:
+
+```groovy
+class User {
+    Attachment photo
+    static remora = [
+            photo: [ 
+                        styles: [
+                                thumb: [width: 50, height: 50, mode: 'fit'],
+                                medium: [width: 250, height: 250, mode: 'scale']
+                        ]
+            ]
+    ]
+ 
+    static mapping = {
+        photo type: AttachmentUserType  // Type must be specified here.
+    }
 }
 ```
 
