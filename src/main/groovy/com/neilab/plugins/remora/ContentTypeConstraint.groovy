@@ -1,12 +1,18 @@
 package com.neilab.plugins.remora
 import com.neilab.plugins.remora.*
 import com.neilab.plugins.remora.Attachment
+import org.grails.datastore.gorm.validation.constraints.AbstractConstraint
+import org.springframework.context.MessageSource
 import org.springframework.validation.Errors
-import grails.validation.AbstractConstraint
+//import grails.validation.AbstractConstraint
 /**
  * Created by ghost on 7/27/15.
  */
 class ContentTypeConstraint extends AbstractConstraint {
+
+    ContentTypeConstraint(Class<?> constraintOwningClass, String constraintPropertyName, Object constraintParameter, MessageSource messageSource) {
+        super(constraintOwningClass, constraintPropertyName, constraintParameter, messageSource)
+    }
 
     boolean supports(Class classObject) {
         classObject == Attachment
@@ -26,5 +32,11 @@ class ContentTypeConstraint extends AbstractConstraint {
     }
 
     protected boolean	skipBlankValues() { true }
+
+    @Override
+    protected Object validateParameter(Object constraintParameter) {
+        return constraintParameter
+    }
+
     protected boolean	skipNullValues() { true }
 }

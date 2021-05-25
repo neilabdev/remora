@@ -1,14 +1,15 @@
 package com.neilab.plugins.remora
 
-import grails.core.GrailsDomainClass
-import grails.core.GrailsDomainClassProperty
 import grails.util.GrailsClassUtils
 import org.grails.core.artefact.DomainClassArtefactHandler
+import org.grails.datastore.mapping.model.MappingFactory
+import org.grails.datastore.mapping.model.PersistentEntity
+import org.grails.datastore.mapping.model.PersistentProperty
 
 class Remora {
     private static Map registeredDomains=[:]
-    private static Map registeredProperties = [:]
-    private static Map registeredMapping = [:]
+    private static Map <String,List<PersistentProperty>> registeredProperties = [:]
+    private static Map <String,Map> registeredMapping = [:]
     private static Map merge_map(Map[] sources) {
         if (sources.length == 0) return [:]
         if (sources.length == 1) return sources[0]
@@ -26,8 +27,9 @@ class Remora {
             result
         }
     }
-    public static void registerDomain(GrailsDomainClass domainClass) {
-        Class clazz = domainClass.clazz
+
+    static void registerDomain(PersistentEntity persistentEntity) {
+        Class clazz = persistentEntity.javaClass
 
         def merge_map_dsl = { Class domainParam ->
             { Class mappingDomainClass ->
@@ -51,28 +53,56 @@ class Remora {
             }.call(domainParam)
         }
 
-        Map remora_mapping =  merge_map_dsl.call(domainClass.clazz)
+        Map remora_mapping =  merge_map_dsl.call(clazz)
 
-        registeredMapping[clazz] = remora_mapping
-        registeredProperties[clazz] = domainClass.properties.findAll { it.type == Attachment } ?: null
-        registeredDomains[clazz] =  true
+        registeredMapping[clazz.name] = remora_mapping
+        registeredProperties[clazz.name] =
+                persistentEntity.persistentProperties.findAll { it.type == Attachment } ?: null
+        registeredDomains[clazz.name] =  true
     }
 
-    public static boolean registeredClass(Class clazz) {
-        registeredDomains.containsKey(clazz)
+    static boolean registeredClass(Class clazz) {
+       return registeredClass(clazz.name)
     }
 
-    public static List<GrailsDomainClassProperty> registeredProperties(Class clazz) {
-        registeredProperties[clazz]
+    static List<MappingFactory> registeredProperties(Class clazz) {
+        return registeredProperties(clazz.name)
     }
 
-    public static Map registeredMapping(Class clazz) {
-        registeredMapping[clazz]
+    static List<PersistentProperty> registeredProperties(String clazzName) {
+        registeredProperties[clazzName]
     }
 
-    public static def config(Class clazz) {
-        registeredDomains[clazz]
+    static Map <String,Map> registeredMapping(Class clazz) {
+        return registeredMapping(clazz.name)
+    }
+
+    static def config(Class clazz) {
+        return config(clazz.name)
+    }
+
+    static boolean registeredClass(String clazzName) {
+        registeredDomains.containsKey(clazzName)
     }
 
 
+
+    static Map registeredMapping(String clazzName) {
+        registeredMapping[clazzName]
+    }
+
+    static def config(String clazzName) {
+        registeredDomains[clazzName]
+    }
+
+    static boolean isCascadingEntity(def params=[:]) {
+        def options = [
+                object:null,
+                field: null
+        ] << params
+
+        def object = options.object // domainClass
+        def field = options.field // Object.fieldName
+        return true
+    }
 }

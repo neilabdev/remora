@@ -2,7 +2,7 @@
 hibernate:
     cache:
         queries: false
-        use_second_level_cache: true
+        use_second_level_cache: false
         use_query_cache: false
         region.factory_class: org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
 
@@ -45,20 +45,13 @@ environments:
                 jdbcInterceptors: ConnectionState
                 defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
 remora:
-  database:
-    table:
-      mapping:
-        id:
-          generator: 'identity'
-#          params:
-#            separator: '-'
-
   storage:
     bucket: 'uploads'
     providerOptions:
       provider: 'local'
       basePath: 'storage'
-      baseUrl: 'http://localhost:8080/image-com.neilab.plugins.remora.test/storage'
+      baseUrl: 'http://localhost:8080/image-test/storage'
+grails:
     mime:
         disable:
             accept:
